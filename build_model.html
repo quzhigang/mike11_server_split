@@ -1,0 +1,1389 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>构建模型</title>
+    <script src="source/jquery-3.2.1.js"></script>
+    <script src="source/jquery.cookie.js"></script>
+    <script src="source/jqmeter.min.js"></script>  <!--进度条插件引用-->>
+    <script src="source/config.js"></script>  <!--进度条插件引用-->>
+
+    <script type="text/javascript">
+        $(function () {
+            //页面加载获取所有已有模型(请求参数无)
+            $.ajaxSetup({ 'cache': false });
+
+            var model_instance = "wg_mike11";
+            $.getJSON('Model_Ser.ashx', { 'request_type': 'get_models', 'request_pars': model_instance}, function (_data) {
+
+                //显示已有模拟方案和模型闸站调度、污染源信息
+                show_models(_data);
+            })
+
+            //显示已有模拟方案
+            function show_models(_data) {
+                $('#select_ele').empty();
+                for (var plan_code in _data) {
+                    var model_info = _data[plan_code];
+                    var info = '';
+                    for (var item in model_info) {
+                        info += item + ': ' + model_info[item] + '&nbsp';
+                    }
+
+                    $('#select_ele').append($('<option >' + plan_code + '$' + '&nbsp;&nbsp' + info + '</option>'));
+                }
+
+                //设置当前选择的模型为最后一个模型
+                $("#select_ele option:last").prop("selected", 'selected');
+
+                //设置本地存储
+                //window.localStorage.setItem('selected_model', $('#select_ele').val().split('$')[0]); //非服务器部署后不支持
+                if ($('#select_ele').val() != "") {
+                    $.cookie('selected_model', $('#select_ele').val().split('$')[0]);
+                }
+
+                //触发一次
+                $('#select_ele').change();
+            }
+
+            //获取选中模型的闸门调度信息
+            $('#select_ele').change(function () {
+                //设置本地存储
+                //window.localStorage.setItem('selected_model', $('#select_ele').val().split('$')[0]);
+                $.cookie('selected_model', $('#select_ele').val().split('$')[0]);
+
+                //清空闸站调度和污染源拟定信息
+                $('#jzz').empty();
+
+                //获取方案名
+                var plan_code = $.cookie('selected_model');
+
+                //判断是否加载进度条
+                $('#jqmeter-container').empty();
+                var model_state = $('#select_ele').val() != null ? $('#select_ele').val().split(' ')[$('#select_ele').val().split(' ').length - 2].substring(0, 3) : null;
+                if (model_state == '计算中') {
+                    var progress_info = $('#select_ele').val().split(' ')[$('#select_ele').val().split(' ').length - 1];
+                    var total_second = parseInt(progress_info.split('$')[0]);
+                    var remain_second = parseInt(progress_info.split('$')[1]);
+                    show_progressbar(total_second, remain_second);
+                }
+
+                //从后台获取该方案的调度信息(由于默认采用使用缓存，修改调度后由刷新问题)
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_ddinfo', 'request_pars': plan_code }, function (dd_data) {
+                    if (dd_data == null) return;
+
+                    // 添加表格框架
+                    var table = $("<table></table>");
+
+                    // 添加表头
+                    var headRow = $("<tr></tr>");
+                    headRow.append("<th>ID</th><th>序号</th><th>名称</th><th>类型</th><th>河流</th><th>调度方式</th>");
+                    table.append(headRow);
+
+                    // 添加表格数据
+                    var data = JSON.parse(dd_data);
+                    $.each(data, function (i, item) {
+                        var row = $("<tr></tr>");
+                        $.each(item, function (j, val) {
+                            row.append("<td>" + val + "</td>");
+                        });
+                        table.append(row);
+                    });
+
+                    // 将表格添加到div容器中
+                    $("#jzz").append(table);
+                })
+            })
+
+            //加载进度条
+            function show_progressbar(total_second, remain_second) {
+                var current_value = ((total_second - remain_second) * 100 / total_second).toString();
+                //加载进度条
+                $('#jqmeter-container').jQMeter({
+                    goal: '100',
+                    raised: '100',
+                    displayTotal: false,
+                    animationSpeed: parseInt(remain_second) * 1000,   //进度条到100需要的时间,为请求返回的时间
+                    height: '20px'
+                });
+            }
+
+            //删除模型
+            $('#del').click(function () {
+                //弹出对话框确认一下
+                if (window.confirm('模型删除后不可恢复，你确认要删除吗？')) {
+                    //获取方案名
+                    var plan_code = $.cookie('selected_model');
+
+                    //请求服务端删除模型,返回剩下的模型集合
+                    $.getJSON('Model_Ser.ashx', { 'request_type': 'del_model', 'request_pars': plan_code }, function (_data) {
+                        //删除后模型集合更新
+                        show_models(_data);
+
+                        //设置当前选择的模型为最后一个模型
+                        $("#select_ele option:last").prop("selected", 'selected');
+
+                        alert("删除方案成功！");
+                    })
+                }
+            })
+
+            //开始计算
+            $('#run').click(function () {
+                //获取方案名
+                var plan_code = $.cookie('selected_model');
+
+                //请求服务端计算模型,返回所需的计算时间（单位秒，估计的，有误差）
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'run_model', 'request_pars': plan_code }, function (_data) {
+                    //加载进度条
+                    show_progressbar(_data, _data);
+                })
+            })
+
+            //开始快速计算  --仅限于纯一维模型，不进行GIS后处理，不提取GIS相关data结果
+            $('#run_quick').click(function () {
+                //获取方案名
+                var plan_code = $.cookie('selected_model');
+
+                //请求服务端计算模型,返回所需的计算时间（单位秒，估计的，有误差）
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'run_model_quick', 'request_pars': plan_code }, function (_data) {
+                    //加载进度条
+                    show_progressbar(_data, _data);
+                })
+            })
+
+            //停止计算
+            $('#stop').click(function () {
+                //获取方案名
+                var plan_code = $.cookie('selected_model');
+
+                //请求服务端计算模型,返回所需的计算时间（单位秒，估计的，有误差）
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'stop_model', 'request_pars': plan_code }, function (_data) {
+                    if (_data.success == true) {
+                        alert("停止模型计算成功！")
+                    }
+                })
+            })
+
+            //开始迭代计算，获取库群优化调度信息 --用于库群优化调度
+            $('#iter_cal').click(function () {
+                //获取方案名
+                var plan_code = $.cookie('selected_model');
+
+                //请求服务端开始迭代计算模型,返回各水库闸站最优调度信息
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'iter_cal', 'request_pars': plan_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //新建方案(模型)
+            $('#xjfa').click(function () {
+                //获取基础方案名(作为基础模型，新建的模型继承该模型所有属性)
+                var base_plan_code = "";  // $.cookie('selected_model');
+
+                //举例数据 方案code、方案名称、开始时间，结束时间，方案描述(可以为空)、结果保存步长(分)、基础模型(可以为空，如果当前选择有模型，则为当前选择的模型)
+                var pars = ['model_20241104110000', '', '2030/07/01 00:00:00', '2030/07/04 00:00:00',
+                    '12322', 60, base_plan_code]; 
+
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'create_model', 'request_pars': JSON.stringify(pars) }, function (_data) {
+
+                    //请求服务端创建模型,返回最新的模型信息
+                    $.getJSON('Model_Ser.ashx', { 'request_type': 'get_models', 'request_pars': '' }, function (_data) {
+
+                        //显示已有模拟方案和模型闸站调度、污染源信息
+                        insert_models(_data);
+                    })
+
+                    //设置当前选择的模型为新模型(最后一个，确保后面的闸站调度为该方案)
+                    $("#select_ele option:last").prop("selected", 'selected');
+
+                    alert("新建方案成功！");
+                })
+            })
+
+            //新建自动预报模型并计算
+            $('#auto_forcast').click(function () {
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'auto_forcast', 'request_pars': '' }, function (_data) {
+                    //新建自动预报模型并计算
+                    alert(_data);
+                })
+            })
+
+            //修改初始条件
+            $('#initial').click(function () {
+                var plan_code = $.cookie('selected_model');
+
+                //intial为monitor则采用监测水情
+                var intial = "monitor";
+
+                //intial为monitor则采用监测水情
+                //var intial = "monitor";
+                var intial = {
+                    "31005650": 247.35, "31006700": 152.71, "31006850": 125.99, //盘石头、小南海、彰武
+                    "31005485": 381.56, "31005480": 291.43, "31005500": 175.89,   //正面、狮豹头、塔岗
+
+                    "31004600": 474.92, "gshsk": 398, "31006950": 212.82,     //群英、孤山湖、双泉
+                    "31005550": 754.12, "31005580": 626.35, "31006050": 364.11,     //陈家院、三郊口、石门(安阳)
+
+                    "31005530": 187.05, "31005200": 272.65, "31006500": 113,    //夺丰、石门(辉县)、汤河
+                    "31006570": 114.36, "31006000": 497.28, "31005110": 248.2, "31004950": 411.23,  //琵琶寺、弓上、宝泉、马鞍石
+
+                    "31004900": 79.83, "31006200": 69.62, "31006302": 63.88,    //修武、合河(共)、黄土岗
+                    "31006410": 59.17, "31003700": 58.87, "31005700": 98.33,   //刘庄、淇门、新村
+                    "31003910": 48.33, "31006600": 240.73, "31006900": 67.28,   //五陵、横水、安阳
+                    "31004300": 38.6, "31003600": 64.7      //元村、汲县
+                };
+
+                //var intial = {
+                //    "31003600": 64.7, "31003700": 58.87, "31003910": 48.33, "31004000": 0,
+                //    "31004300": 38.6, "31004600": 473.1, "31004900": 79.83, "31004950": 413.04,
+                //    "31005110": 246.46, "31005200": 270.96, "31005480": 288.43, "31005485": 378,
+                //    "31005500": 170.44, "31005530": 182.16, "31005550": 743.42, "31005580": 612.11,
+                //    "31005650": 250, "31005700": 98.33, "31006000": 482.12, "31006050": 360.54,
+                //    "31006200": 69.62, "31006302": 63.88, "31006410": 59.17, "31006500": 108.6,
+                //    "31006570": 112.8, "31006600": 240.73, "31006700": 159.67, "31006850": 127.81,
+                //    "31006900": 67.28, "31006950": 62.94, "gshsk": 398, "HP0074107210000029": 0,
+                //    "SZ24": 0, "SZ27": 0, "SZ42": 0, "SZ33": 0, "HP0074105220008064": 0,
+                //    "SZ47": 0, "HP0074108210000054": 0, "HP0074108210000312": 0, "HP0074108210000088": 0,
+                //    "HP0074108210000069": 0, "HP007410724000022X": 0, "SZ20": 0, "SZ23": 0,
+                //    "HP0074106220000027": 0, "HP0074106210000414": 0, "HP0074105270000389": 0,
+                //    "SZ37": 0, "HP0074105030000023": 0, "SZ36": 0, "HP0074105270000283": 0, "SZ43": 0,
+                //    "SZ21": 0, "SZ22": 0, "SZ25": 0, "SZ26": 0, "HP0074105260000666": 0, "SZ38": 0,
+                //    "SZ28": 0, "HP0074106210000050": 0, "SZ29": 0, "HP0074106210000137": 0, "SZ41": 0,
+                //    "SZ44": 0, "SZ40": 0, "HP0074105230000154": 0, "HP0074105230000211": 0, "SZ39": 0,
+                //    "SZ35": 0, "SZ45": 0, "SZ46": 0, "SZ32": 0, "HP0074109220000261": 0, "nsbd_dsh": 0,
+                //    "nsbd_sanmh": 0, "nsbd_yh": 0, "nsbd_smh": 0, "nsbd_bqh": 0, "nsbd_ch": 0,
+                //    "nsbd_qh": 0, "nsbd_tyh": 0, "nsbd_th": 0, "nsbd_ayh": 0
+                //};
+
+                var pars = [plan_code, intial]
+                $.post('Model_Ser.ashx', { 'request_type': 'modify_initial', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //修改边界条件
+            $('#boundry').click(function () {
+                var plan_code = $.cookie('selected_model');
+
+                var bnd_type = "rf_model";       //降雨计算洪水
+                //var bnd_type = "reach_inflow";       //指定河道洪水
+                //var bnd_type = "no_inflow";      //无洪水入流
+                //var bnd_type = "catchment_inflow"; //指定子流域洪水
+
+                //当选择指定子流域或河道洪水时，子流域传流域编码，河道传边界条件编码,即bnd_id
+                //var bnd_value = {
+                //    "jd11409985_wd3544974": {  //保留经纬度5位小数
+                //        "2024/06/18 00:00:00": 136.0,
+                //        "2024/06/18 01:00:00": 344.0,
+                //        "2024/06/18 02:00:00": 552.0,
+                //        "2024/06/18 03:00:00": 760.0,
+                //        "2024/06/20 23:00:00": 918.0,
+                //        "2024/06/21 00:00:00": 904.0
+                //    }
+                //};      
+
+                var pars = [plan_code, bnd_type];  //可以为2个或3个元素的数组
+                $.post('Model_Ser.ashx', { 'request_type': 'change_boundry', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //修改闸站调度
+            $('#zzdd').click(function () {
+                //获取基础方案名(作为基础模型，新建的模型继承该模型所有属性)
+                var plan_code = $.cookie('selected_model');
+
+                //var ddinfo = "monitor";                      //1、采用当前监测的闸站状态工情
+                //var ddinfo = "gaterule";                      //2、所有闸门采用各闸站设计调度规则进行调度
+
+                //3、指定各闸门调度方式--指令调度(未指定的闸门按默认规则调度) ，
+                //""表示全过程调度方式一致，调度方式分为"全开"、"全关"、"半开"、"控泄"、"规则调度",其中"半开"需要指定开闸数量和闸门开度(各闸门相同，流量类型闸门不支持半开)，"控泄"需要指定控泄流量
+                //多次调度的，后面的调度时间应在前面的调度时间之后
+                //未指定初始时刻调度方式的，则初始时刻调度按与第一次相反(第一次全开、半开、半开则初始为全关；第一次为全关，则初始为全开)
+                //未指定终止时刻调度方式的，则终止时刻调度按最后一次调度方式
+                //仅流量类型的闸门支持指定时间的控泄(水库泄洪洞), 指定时间控泄下泄流量有可能超过建筑物本身在该水位下的过流能力
+                //指定时间的半开不支持指定孔数，默认为针对所有闸孔
+                var ddinfo = [
+                    ["PSTSK_2#XHD", ["", "全关", 0, 0]],
+
+                    [
+                        "PSTSK_1#XHD",
+                        ["2024/06/30 08:00:00", "控泄", 1, 1.33],
+                        ["2024/06/30 13:00:00", "控泄", 1, 11.16],
+                        ["2024/06/30 19:00:00", "控泄", 1, 1.33],
+                        ["2024/07/01 08:00:00", "控泄", 1, 1.33],
+                        ["2024/07/01 11:00:00", "控泄", 1, 11.16],
+                        ["2024/07/01 17:00:00", "控泄", 1, 1.33],
+                        ["2024/07/02 07:00:00", "控泄", 1, 1.33],
+                        ["2024/07/02 08:00:00", "控泄", 1, 4.4],
+                        ["2024/07/24 10:00:00", "控泄", 1, 4.4],
+                        ["2024/07/24 11:00:00", "控泄", 1, 9.89],
+                        ["2024/07/24 13:00:00", "控泄", 1, 9.89],
+                        ["2024/07/24 13:20:00", "控泄", 1, 28.19],
+                        ["2024/07/24 18:00:00", "控泄", 1, 28.19],
+                        ["2024/07/24 18:20:00", "控泄", 1, 62.09],
+                        ["2024/07/24 20:00:00", "控泄", 1, 65.69],
+                        ["2024/07/24 20:30:00", "控泄", 1, 91.99],
+                        ["2024/07/24 21:30:00", "控泄", 1, 91.99],
+                        ["2024/07/24 22:00:00", "控泄", 1, 92.79],
+                        ["2024/07/25 07:30:00", "控泄", 1, 92.79],
+                        ["2024/07/25 08:00:00", "控泄", 1, 92.39],
+                        ["2024/07/25 13:00:00", "控泄", 1, 92.39],
+                        ["2024/07/25 14:00:00", "控泄", 1, 86.49],
+                        ["2024/07/25 19:00:00", "控泄", 1, 86.49],
+                        ["2024/07/25 20:00:00", "控泄", 1, 86.09],
+                        ["2024/07/25 21:00:00", "控泄", 1, 86.09],
+                        ["2024/07/25 21:40:00", "控泄", 1, 151.89],
+                        ["2024/07/25 22:00:00", "控泄", 1, 104.89],
+                        ["2024/07/26 07:30:00", "控泄", 1, 104.89],
+                        ["2024/07/26 08:00:00", "控泄", 1, 125.89],
+                        ["2024/07/26 08:10:00", "控泄", 1, 146.89],
+                        ["2024/07/26 09:30:00", "控泄", 1, 146.89],
+                        ["2024/07/26 10:00:00", "控泄", 1, 184.89],
+                        ["2024/07/26 11:00:00", "控泄", 1, 189.89],
+                        ["2024/07/26 13:00:00", "控泄", 1, 189.89],
+                        ["2024/07/26 14:00:00", "控泄", 1, 189.69],
+                        ["2024/07/26 18:00:00", "控泄", 1, 188.69],
+                        ["2024/07/26 20:00:00", "控泄", 1, 187.69],
+                        ["2024/07/27 00:00:00", "控泄", 1, 186.69],
+                        ["2024/07/27 06:00:00", "控泄", 1, 185.69],
+                        ["2024/07/27 07:00:00", "控泄", 1, 185.69],
+                        ["2024/07/27 08:00:00", "控泄", 1, 10.99],
+                        ["2024/07/27 14:00:00", "控泄", 1, 10.99],
+                        ["2024/07/27 17:00:00", "控泄", 1, 11.69],
+                        ["2024/07/28 08:00:00", "控泄", 1, 11.69],
+                        ["2024/07/28 10:50:00", "控泄", 1, 5.1],
+                        ["2024/07/31 08:00:00", "控泄", 1, 5.1],
+                        ["2024/07/31 20:00:00", "控泄", 1, 1.48],
+                        ["2024/08/02 08:00:00", "控泄", 1, 1.48],
+                        ["2024/08/02 11:30:00", "控泄", 1, 0.3],
+                        ["2024/08/03 08:00:00", "控泄", 1, 0.3]
+                    ],
+
+                    [
+                        "XNHSK_XHD",
+                        ["2024/06/30 08:00:00", "控泄", 1, 2.0],
+                        ["2024/07/04 08:00:00", "控泄", 1, 2.0],
+                        ["2024/07/04 18:30:00", "控泄", 1, 4.0],
+                        ["2024/07/08 08:00:00", "控泄", 1, 4.0],
+                        ["2024/07/08 19:40:00", "控泄", 1, 3.0],
+                        ["2024/07/08 20:00:00", "控泄", 1, 4.0],
+                        ["2024/07/16 07:00:00", "控泄", 1, 4.0],
+                        ["2024/07/17 08:10:00", "控泄", 1, 0.0],
+                        ["2024/07/25 17:20:00", "控泄", 1, 0.0],
+                        ["2024/07/25 21:20:00", "控泄", 1, 30.0],
+                        ["2024/07/26 13:50:00", "控泄", 1, 30.0],
+                        ["2024/07/26 16:30:00", "控泄", 1, 28.6],
+                        ["2024/07/26 21:00:00", "控泄", 1, 30.8],
+                        ["2024/07/27 17:00:00", "控泄", 1, 0.0],
+                        ["2024/08/03 08:00:00", "控泄", 1, 0.0]
+                    ],
+
+                    [
+                        "ZWSK_XHD",
+                        ["2024/06/30 08:00:00", "控泄", 1, 11.0],
+                        ["2024/07/02 08:00:00", "控泄", 1, 11.0],
+                        ["2024/07/02 12:00:00", "控泄", 1, 8.0],
+                        ["2024/07/04 08:00:00", "控泄", 1, 8.0],
+                        ["2024/07/04 20:00:00", "控泄", 1, 30.0],
+                        ["2024/07/05 07:00:00", "控泄", 1, 50.0],
+                        ["2024/07/07 08:00:00", "控泄", 1, 50.0],
+                        ["2024/07/07 11:30:00", "控泄", 1, 10.0],
+                        ["2024/07/16 08:00:00", "控泄", 1, 10.0],
+                        ["2024/07/16 11:00:00", "控泄", 1, 6.0],
+                        ["2024/07/25 20:00:00", "控泄", 1, 6.0],
+                        ["2024/07/25 21:00:00", "控泄", 1, 80.0],
+                        ["2024/07/27 08:00:00", "控泄", 1, 80.0],
+                        ["2024/07/27 09:00:00", "控泄", 1, 5.0],
+                        ["2024/07/28 20:00:00", "控泄", 1, 5.0],
+                        ["2024/07/29 07:00:00", "控泄", 1, 6.0],
+                        ["2024/08/03 08:00:00", "控泄", 1, 6.0]
+                    ],
+
+                    [
+                        "QYSK_XHD",
+                        ["2024/06/30 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/18 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/19 07:00:00", "控泄", 1, 1.2],
+                        ["2024/07/19 08:00:00", "控泄", 1, 1.2],
+                        ["2024/07/20 07:00:00", "控泄", 1, 0.0],
+                        ["2024/07/27 06:00:00", "控泄", 1, 0.0],
+                        ["2024/07/27 07:00:00", "控泄", 1, 2.41],
+                        ["2024/07/27 08:00:00", "控泄", 1, 2.41],
+                        ["2024/07/27 14:00:00", "控泄", 1, 0.0],
+                        ["2024/07/29 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/30 07:00:00", "控泄", 1, 2.1],
+                        ["2024/08/03 08:00:00", "控泄", 1, 2.1]
+                    ],
+
+                    [
+                        "SQSK_XHD",
+                        ["2024/06/30 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/04 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/05 07:00:00", "控泄", 1, 1.8],
+                        ["2024/07/05 08:00:00", "控泄", 1, 1.8],
+                        ["2024/07/06 07:00:00", "控泄", 1, 0.91],
+                        ["2024/07/25 08:00:00", "控泄", 1, 0.88],
+                        ["2024/07/26 07:00:00", "控泄", 1, 8.1],
+                        ["2024/07/26 08:00:00", "控泄", 1, 8.0],
+                        ["2024/07/27 06:00:00", "控泄", 1, 0.0],
+                        ["2024/08/03 08:00:00", "控泄", 1, 0.0]
+                    ],
+
+                    [
+                        "AYSMSK_XHD",
+                        ["2024/06/30 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/01 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/02 07:00:00", "控泄", 1, 0.16],
+                        ["2024/07/02 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/03 07:00:00", "控泄", 1, 0.17],
+                        ["2024/07/03 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/04 07:00:00", "控泄", 1, 0.16],
+                        ["2024/07/04 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/07 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/08 07:00:00", "控泄", 1, 0.13],
+                        ["2024/07/08 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/09 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/10 07:00:00", "控泄", 1, 0.22],
+                        ["2024/07/10 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/11 07:00:00", "控泄", 1, 0.18],
+                        ["2024/07/11 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/12 07:00:00", "控泄", 1, 0.19],
+                        ["2024/07/12 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/13 07:00:00", "控泄", 1, 0.11],
+                        ["2024/07/13 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/14 07:00:00", "控泄", 1, 0.15],
+                        ["2024/07/14 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/15 07:00:00", "控泄", 1, 0.18],
+                        ["2024/07/15 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/16 07:00:00", "控泄", 1, 0.16],
+                        ["2024/07/16 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/17 07:00:00", "控泄", 1, 0.16],
+                        ["2024/07/17 08:00:00", "控泄", 1, 0.0],
+                        ["2024/08/03 08:00:00", "控泄", 1, 0.0]
+                    ],
+
+                    [
+                        "THSK_XHD",
+                        ["2024/06/30 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/01 07:00:00", "控泄", 1, 1.6],
+                        ["2024/07/01 08:00:00", "控泄", 1, 1.0],
+                        ["2024/07/02 07:00:00", "控泄", 1, 0.8],
+                        ["2024/07/02 08:00:00", "控泄", 1, 1.2],
+                        ["2024/07/03 07:00:00", "控泄", 1, 0.0],
+                        ["2024/07/03 08:00:00", "控泄", 1, 1.2],
+                        ["2024/07/04 07:00:00", "控泄", 1, 0.0],
+                        ["2024/07/04 08:00:00", "控泄", 1, 1.3],
+                        ["2024/07/05 07:00:00", "控泄", 1, 0.0],
+                        ["2024/07/25 08:00:00", "控泄", 1, 0.0],
+                        ["2024/07/26 07:00:00", "控泄", 1, 10.0],
+                        ["2024/07/27 14:00:00", "控泄", 1, 10.0],
+                        ["2024/07/27 17:00:00", "控泄", 1, 8.0],
+                        ["2024/07/28 06:00:00", "控泄", 1, 6.0],
+                        ["2024/07/28 07:00:00", "控泄", 1, 6.0],
+                        ["2024/07/28 08:00:00", "控泄", 1, 7.0],
+                        ["2024/07/29 07:00:00", "控泄", 1, 3.0],
+                        ["2024/07/29 08:00:00", "控泄", 1, 0.0],
+                        ["2024/08/02 08:00:00", "控泄", 1, 0.0],
+                        ["2024/08/03 07:00:00", "控泄", 1, 10.0],
+                        ["2024/08/03 08:00:00", "控泄", 1, 10.0]
+                    ],
+
+                    ["GSSK_XHD", ["", "全关", 0, 0]],
+
+                    [
+                        "MASSK_XHD",
+                        ["2024/06/30 08:00:00", "控泄", 1, 0.02],
+                        ["2024/07/02 08:00:00", "控泄", 1, 0.02],
+                        ["2024/07/03 07:00:00", "控泄", 1, 0.23],
+                        ["2024/07/03 08:00:00", "控泄", 1, 0.02],
+                        ["2024/07/05 08:00:00", "控泄", 1, 0.02],
+                        ["2024/07/06 07:00:00", "控泄", 1, 0.35],
+                        ["2024/07/06 08:00:00", "控泄", 1, 0.35],
+                        ["2024/07/07 07:00:00", "控泄", 1, 0.15],
+                        ["2024/07/07 08:00:00", "控泄", 1, 0.15],
+                        ["2024/07/08 07:00:00", "控泄", 1, 0.04],
+                        ["2024/07/08 08:00:00", "控泄", 1, 0.04],
+                        ["2024/07/09 07:00:00", "控泄", 1, 0.15],
+                        ["2024/07/14 07:00:00", "控泄", 1, 0.1],
+                        ["2024/07/14 08:00:00", "控泄", 1, 0.02],
+                        ["2024/07/17 08:00:00", "控泄", 1, 0.02],
+                        ["2024/07/18 07:00:00", "控泄", 1, 0.4],
+                        ["2024/07/18 08:00:00", "控泄", 1, 0.02],
+                        ["2024/07/27 14:00:00", "控泄", 1, 0.1],
+                        ["2024/07/27 17:00:00", "控泄", 1, 0.5],
+                        ["2024/07/28 06:00:00", "控泄", 1, 2.0],
+                        ["2024/07/29 08:00:00", "控泄", 1, 2.0],
+                        ["2024/07/30 07:00:00", "控泄", 1, 5.0],
+                        ["2024/07/30 08:00:00", "控泄", 1, 1.0],
+                        ["2024/07/31 07:00:00", "控泄", 1, 6.0],
+                        ["2024/07/31 08:00:00", "控泄", 1, 1.0],
+                        ["2024/08/01 07:00:00", "控泄", 1, 4.0],
+                        ["2024/08/01 08:00:00", "控泄", 1, 2.0],
+                        ["2024/08/03 08:00:00", "控泄", 1, 2.0]
+                    ]
+                ];
+
+                var pars = [plan_code, ddinfo];
+                $.post('Model_Ser.ashx', { 'request_type': 'modify_gatestate', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取方案主要控制闸站的 简短调度指令
+            $('#get_dispatch_plan').click(function () {
+                var plan_code = $.cookie('selected_model');
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_dispatch_plan', 'request_pars': plan_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取故障闸门基础信息  --根据业务模型编码
+            $('#get_faultgate_baseinfo').click(function () {
+                var business_code = 'gate_fault_ytz';
+
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_faultgate_baseinfo', 'request_pars': business_code}, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //设置故障闸门
+            $('#set_faultgate').click(function () {
+                //获取基础方案名(作为基础模型，新建的模型继承该模型所有属性)
+                var plan_code = $.cookie('selected_model');
+                var fault_dinfo = ["QHNZ_XHKJZZ", "部分闸门无法完全关闭", ["XHK_JZZ2", "XHK_JZZ4"],[0,0.5,0,0.2,0]];
+                
+                var pars = [plan_code, fault_dinfo];
+                $.post('Model_Ser.ashx', { 'request_type': 'set_fault_gate', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取故障闸门信息
+            $('#get_faultgate').click(function () {
+                //获取基础方案名(作为基础模型，新建的模型继承该模型所有属性)
+                var plan_code = $.cookie('selected_model');
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_fault_gate', 'request_pars': plan_code}, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //修改河道 溃口设置(只能设置一个溃口，重新设置则会更新溃口)
+            //溃决时机 -- 1、最高水位  2、指定水位;
+            $('#change_reachbreak').click(function () {
+                var plan_code = $.cookie('selected_model');
+                var res_breaks = {
+                    "name": "卫辉共渠右堤决口",    //溃口名称设置
+                    "location": ["113.917822", "35.368627"],    //溃口位置设置
+                    "fh_width": 200,           //溃口宽
+                    "fh_minutes": 30,         //溃堤时长(分)
+                    "break_condition": "max_level",  //溃决时机描述--河道水位达到最高水位"max_level"、指定河道水位"set_level"
+                    "break_level": 0     //溃决水位，当break_condition为max_level时，break_level用任意值比如0，否则用指定值
+                };
+
+                var pars = [plan_code, res_breaks]
+                $.post('Model_Ser.ashx', { 'request_type': 'change_reach_break', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取河道溃口设置信息
+            $('#get_reachbreak').click(function () {
+                //请求参数 
+                var plan_code = $.cookie('selected_model');  
+
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_reach_break', 'request_pars': plan_code }, function (_data) {
+                    $('#res_text').empty();
+                    $('#res_text').val(JSON.stringify(_data));
+                })
+            })
+
+            //设置优化调度目标和约束 --库区优化调度、模型反算
+            $('#optimize_dispatch').click(function () {
+                //获取基础方案名(作为基础模型，新建的模型继承该模型所有属性)
+                var plan_code = $.cookie('selected_model');
+
+                //1、单目标
+                var dd_target = {
+                    "name": "元村",
+                    "stcd": "31004300",
+                    "max_discharge": 2500  //最大允许洪峰流量
+                };   
+
+                //2、水库调洪水位约束
+                //前端统一设置库水位 <=防洪洪水位、设计洪水位、校核洪水位选其一
+                var res_level_constraint = [
+                    { "name": "双泉水库", "stcd": "31006950", "level_name": "防洪高水位", "level_value": 142.3 },
+                    { "name": "夺丰水库", "stcd": "31005530", "level_name": "防洪高水位", "level_value": 194.5 },
+                    { "name": "陈家院水库", "stcd": "31005550", "level_name": "防洪高水位", "level_value": 780 },
+                    { "name": "三郊口水库", "stcd": "31005580", "level_name": "防洪高水位", "level_value": 640 },
+                    { "name": "盘石头水库", "stcd": "31005650", "level_name": "防洪高水位", "level_value": 270 },
+                    { "name": "群英水库", "stcd": "31004600", "level_name": "防洪高水位", "level_value": 481.5 },
+                    { "name": "马鞍石水库", "stcd": "31004950", "level_name": "防洪高水位", "level_value": 421.7 },
+                    { "name": "宝泉水库", "stcd": "31005110", "level_name": "防洪高水位", "level_value": 261 },
+                    { "name": "石门水库(辉县)", "stcd": "31005200", "level_name": "防洪高水位", "level_value": 305.2 },
+                    { "name": "弓上水库", "stcd": "31006000", "level_name": "防洪高水位", "level_value": 506.39 },
+                    { "name": "石门水库(安阳)", "stcd": "31006050", "level_name": "防洪高水位", "level_value": 382 },
+                    { "name": "汤河水库", "stcd": "31006500", "level_name": "防洪高水位", "level_value": 114.2 },
+                    { "name": "狮豹头水库", "stcd": "31005480", "level_name": "防洪高水位", "level_value": 309.3 },
+                    { "name": "正面水库", "stcd": "31005485", "level_name": "防洪高水位", "level_value": 398.7 },
+                    { "name": "塔岗水库", "stcd": "31005500", "level_name": "防洪高水位", "level_value": 181.6 },
+                    { "name": "琵琶寺水库", "stcd": "31006570", "level_name": "防洪高水位", "level_value": 121 },
+                    { "name": "小南海水库", "stcd": "31006700", "level_name": "防洪高水位", "level_value": 177 },
+                    { "name": "彰武水库", "stcd": "31006850", "level_name": "防洪高水位", "level_value": 132.1 },
+                ]
+
+                //3、其他约束
+                var other_constraint = {
+                    "gate": true,
+                    "reach": true,
+                    "xzhq_level": true  
+                };   
+
+                var pars = [plan_code, dd_target, res_level_constraint, other_constraint];
+                $.post('Model_Ser.ashx', { 'request_type': 'set_dispatch_target', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+
+            //根据已经计算完成的预报预演方案，反向推演单个水库调度方案
+            $('#backcal_resdd').click(function () {
+                var plan_code = $.cookie('selected_model');
+                var res_name = "盘石头水库";       //调度对象--水库名称
+                var max_level = 258;               //调度目标--水库允许最高水位
+
+                var pars = [plan_code, res_name, max_level];
+                $.get('Model_Ser.ashx', { 'request_type': 'backcal_resdd', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+
+
+            //修改产汇流模型类型
+            $('#rf_model').click(function () {
+                var plan_code = $.cookie('selected_model');
+                var pars = [plan_code, ""
+                    //{
+                    //    "jlh_nsbd": "nam",
+                    //    "jlh_lhx": "nam",
+                    //    "jlh_kxdd": "nam",
+                    //    "jlh_jsl": "nam",
+                    //    "jlh_dfq": "nam",
+                    //    "jlh_sxh": "nam",
+                    //    "jlh_g107": "nam",
+                    //    "jlh_yqgq": "nam",
+                    //    "xsh_nsbd": "nam",
+                    //    "sxh_tjh": "nam",
+                    //    "chh_cgsx": "nam",
+                    //    "chh_nsbdcgs": "nam",
+                    //    "dfq_sql": "nam",
+                    //    "dfq_g107": "nam",
+                    //    "dfq_loh": "nam",
+                    //    "dfq_lzh": "nam",
+                    //    "dfq_xeh": "nam",
+                    //    "jsh_lhx": "nam",
+                    //    "jsh_g107": "nam",
+                    //    "qlh_nsbd": "nam",
+                    //    "qlh_sblh": "nam",
+                    //    "qlh_dfq": "nam",
+                    //    "qlh_chh": "nam",
+                    //    "sbl_nsbd": "nam",
+                    //    "weh_weh": "nam",
+                    //    "xeh_jgys": "nam",
+                    //    "xeh_jgtl": "nam",
+                    //    "xeh_g107": "nam",
+                    //}
+                ];  //如果为默认，则为空对象或空字符串
+
+                $.post('Model_Ser.ashx', { 'request_type': 'change_rfmodel', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //修改模型名称和描述和保存时间步长
+            $('#change_modelnamedesc').click(function () {
+                var plan_code = $.cookie('selected_model');
+                var step_save_minutes = "";             //如果是""则不修改
+                var pars = [plan_code, "新的模型名称", "新的模型描述", step_save_minutes];
+
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'change_model_baseinfo', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取产汇流模型类型
+            $('#getrf_model').click(function () {
+                var plan_code = $.cookie('selected_model');
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_rfmodel', 'request_pars': plan_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //追加一个新模型
+            function insert_models(_data) {
+                for (var plan_code in _data) {
+                    var model_info = _data[plan_code];
+                    var info = '';
+                    for (var item in model_info) {
+                        info += item + ': ' + model_info[item] + '&nbsp';
+                    }
+
+                    $('#select_ele').append($('<option >' + plan_code + '$' + '&nbsp;&nbsp' + info + '</option>'));
+                }
+
+                //设置当前选择的模型为最后一个模型
+                $("#select_ele option:last").prop("selected", 'selected');
+
+                //触发一次
+                $('#select_ele').change();
+            }
+
+            //获取模型统计data结果
+            $('#get_tjres').click(function () {
+                var plan_code = $.cookie('selected_model');//自动预报的plan_code为"model_auto"
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_tjdata_result', 'request_pars': plan_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取模型过程data结果
+            $('#get_gcres').click(function () {
+                var plan_code = $.cookie('selected_model');
+
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_gcdata_result', 'request_pars': plan_code}, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取GIS过程 --三维面结果
+            $('#get_gisgc_polygon').click(function () {
+                var plan_code = $.cookie('selected_model');
+                var now_time = "2023/10/26 00:00:00";     
+                var pars = [plan_code, now_time];
+
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_gisgc_polygon_result', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取GIS三维样板线(geojson格式)
+            $('#get_sampleline').click(function () {
+                var plan_code = $.cookie('selected_model');
+
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_sampleline', 'request_pars': plan_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取模型GIS过程线的全过程属性结果 (某一类的全过程结果)
+            $('#get_gisline_data').click(function () {
+                var plan_code = $.cookie('selected_model');
+                var gis_restype = "Waterlevel";     //获取的结果数据类型，与要素字段名相同，分4类 "Waterlevel","Speed","Waterh","Discharge"
+                var pars = [plan_code, gis_restype];
+
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_sampleline_data_result', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取GIS统计结果 --线统计结果
+            $('#get_gistj').click(function () {
+                var plan_code = $.cookie('selected_model');
+
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_gistj_result', 'request_pars': plan_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取GIS统计结果 --淹没面结果
+            $('#get_gistj_polygon').click(function () {
+                var plan_code = $.cookie('selected_model');
+
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_gistj_polygon_result', 'request_pars': plan_code}, function (_data) {
+                })
+            })
+
+            //查询某点水位流量结果
+            $('#get_pointres').click(function () {
+                var plan_code = $.cookie('selected_model');
+                var now_time = "";       //如果时间为""，则查询的是4个结果的过程
+                var pars = [plan_code, now_time, "114.20598", "32.42200"];
+
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_point_result', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取纵剖面图结果
+            $('#wrynd').click(function () {
+                var plan_code = $.cookie('selected_model');
+                var res_type = "qzd_result";     //获取的结果数据类型，与要素字段名相同，分3类 "swzd_result","qzd_result","vzd_result"
+                var pars = [plan_code, res_type];
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_zp_result', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert("成功!");
+                })
+            })
+
+            //获取河道信息(包含中文名，英文ID、总长度等信息)及各河道断面清单
+            $('#sections').click(function () {
+                var plan_code = $.cookie('selected_model');
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_reachsections', 'request_pars': plan_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取单一河道断面的水位流量过程
+            $('#level_q').click(function () {
+                var plan_code = $.cookie('selected_model');
+                var reach_name = "SS_BRANCH_JLH_KD_GZDU";
+                var chainage = 50;
+                var pars = [plan_code, reach_name, chainage];
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_sectionres', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取多个河道断面的水位流量过程
+            $('#level_q_list').click(function () {
+                var plan_code = $.cookie('selected_model');
+                var sections = [
+                    {
+                        "reach": "DSH",
+                        "chainages":[1000,2000,3023.5]
+                    },
+                    {
+                        "reach": "GQ",
+                        "chainages": [600, 1500, 4510.2]
+                    }
+                ]
+
+                var pars = [plan_code, sections];
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_sectionlist_res', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取多个河道断面的流量过程
+            $('#get_sectionq').click(function () {
+                var plan_code = $.cookie('selected_model');
+                var reach_section_q = {
+                    "gq_kb": {
+                        "reachname": "SS_BRANCH_GQ_KD_GZDU",
+                        "chainage": 50.0
+                    }
+                };
+
+                var pars = [plan_code, reach_section_q];
+                $.post('Model_Ser.ashx', { 'request_type': 'get_section_discharges', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取多个子流域的流量过程
+            $('#get_catchmentq').click(function () {
+                var plan_code = $.cookie('selected_model');
+                var sub_catchment_q = {
+                    "jyh_czyx": "jyh_czyx",
+                    "jlh_jgsk": "jlh_jgsk"
+                }
+                var pars = [plan_code, sub_catchment_q];
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_catchment_discharges', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取某个建筑物的过流信息，包括上下游水位过程、过闸流量、最大流速、
+            $('#gate_res').click(function () {
+                var plan_code = $.cookie('selected_model');
+                var gate_name = "GQ_YTZJZZ";
+                var pars = [plan_code, gate_name];
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_gateres', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取最新闸站工情
+            $('#get_gatestate').click(function () {
+                var business_code = "flood_dispatch_wg"; //如果业务编码为空字符串""，则获取全部的
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_gatestate', 'request_pars': business_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //模型初始化相关业务
+            $('#model_business').click(function () {
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'model_business', 'request_pars': "" }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取单一河道断面的原始断面数据(根据河道断面桩号)
+            $('#section_data').click(function () {
+                var reach_name = "JLH";
+                var chainage = 155736.0;
+                //var pars = [reach_name, chainage];
+                var pars = ["31004300", ""];
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_sectiondata', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取单一河道断面的原始断面数据(根据点)
+            $('#get_section_point').click(function () {
+                var pars = ["114.15169", "35.483368"]; //["113.726432", "34.835682"];
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_sectiondata_frompoint', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取根据方案ID需要进行流量统计的特征河道断面
+            $('#get_atreach').click(function () {
+                var plan_code = $.cookie('selected_model');
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_atreach', 'request_pars': plan_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取根据方案ID需要进行流量统计的特征河道断面
+            $('#get_reachsection_location').click(function () {
+                var plan_code = $.cookie('selected_model');
+                var section_location = [["GQ", 53263], ["GQ", 43263], ["WH", 13263]];
+
+                var pars = [plan_code, section_location];
+                $.post('Model_Ser.ashx', { 'request_type': 'get_reachsection_location', 'request_pars': JSON.stringify(pars) }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取站点3个水位信息
+            $('#get_stationinfo').click(function () {
+                var plan_code = $.cookie('selected_model');
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_station_info', 'request_pars': "" }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取建筑物规则调度信息
+            $('#get_str_ruledd_info').click(function () {
+                var business_code = "flood_dispatch_wg"; //如果业务编码为空字符串""，则获取全部的
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_strddrule_info', 'request_pars': business_code}, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取水库、河道闸站、蓄滞洪区的可控建筑物
+            $('#get_control_strs').click(function () {
+                var business_code = "flood_dispatch_wg"; //如果业务编码为空字符串""，则获取全部的
+                var obj_stcd = "HP0074107210000029";  //水库、河道闸站、蓄滞洪区的stcd
+                var pars = [business_code, obj_stcd]
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_control_strs', 'request_pars': JSON.stringify(pars)  }, function (_data) {
+
+                })
+            })
+
+            //获取一维模型初始水情信息
+            $('#get_initial_info').click(function () {
+                var plan_code = $.cookie('selected_model');
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_initial_waterlevel', 'request_pars': plan_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取最新水情
+            $('#get_now_water').click(function () {
+                var business_code = ""; //如果业务编码为空字符串""或"undefined"，则获取全部的
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_now_waterinfo', 'request_pars': business_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取河道设计洪水
+            $('#get_design_flood').click(function () {
+                var business_code = "flood_route_dsh"; //如果业务编码为空字符串""或"undefined"，则获取全部的
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_design_flood', 'request_pars': business_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取预警信息 
+            $('#get_res_warning').click(function () {
+                var plan_code = $.cookie('selected_model');  //前端方案名默认是自动预报方案名:model_auto，如果选择人工预报方案，则相应得到该人工预报方案的预警信息
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_risk_warning', 'request_pars': plan_code}, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取南水北调交叉断面信息
+            $('#get_nsbd_sectioninfo').click(function () {
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_nsbd_sectioninfo', 'request_pars':""}, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取一维模型边界条件信息
+            $('#get_bndinfo').click(function () {
+                var plan_code = $.cookie('selected_model');
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_bndinfo', 'request_pars': plan_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取一维模型优化调度信息
+            $('#get_optimize_dispatch').click(function () {
+                var plan_code = $.cookie('selected_model');
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_dispatch_target', 'request_pars': plan_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取历史预报清单
+            $('#get_history_autoforcast_list').click(function () {
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_history_autoforcast_list', 'request_pars': "" }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //删除历史预报方案结果
+            $('#del_history_autoforcast').click(function () {
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'del_history_autoforcast', 'request_pars': "model_auto_20241015170000" }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取场次降雨洪水信息清单
+            $('#get_rain_flood_list').click(function () {
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_rain_flood_list', 'request_pars': "" }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取某场次洪水的方案清单信息
+            $('#get_rainflood_plan_list').click(function () {
+                var flood_id = "flood_2021_0719_0730_460mm";
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_rainflood_plan_list', 'request_pars': flood_id }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //修改某场次洪水的推荐方案
+            $('#change_rainflood_recomplan').click(function () {
+                var plan_code = $.cookie('selected_model');  //参数为选择的推荐方案
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'change_rainflood_recomplan', 'request_pars': plan_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //工程重点巡查位置
+            $('#important_inspect').click(function () {
+                var plan_code = $.cookie('selected_model');  //参数为选择的推荐方案
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'important_inspect', 'request_pars': plan_code }, function (_data) {
+
+                })
+            })
+
+            //获取历史预报数据结果
+            $('#get_history_autoforcast_res').click(function () {
+                var plan_code = "model_auto_20240715090000";
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_history_autoforcast_res', 'request_pars': plan_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取业务模型初始视角
+            $('#get_business_view').click(function () {
+                var business_model = "embank_break_gq";
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_business_view', 'request_pars': business_model }, function (_data) {
+                    alert(_data);
+                })
+            })
+
+            //获取山洪自动预报结果
+            $('#get_mountain_forecast_flood').click(function () {
+                var plan_code = "model_auto";
+                $.getJSON('Model_Ser.ashx', { 'request_type': 'get_mountain_forecast_flood', 'request_pars': plan_code }, function (_data) {
+                    alert(_data);
+                })
+            })
+        })
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            font-size: 100%;
+            vertical-align: baseline;
+        }
+
+        .datadiv {
+            position: absolute;
+            border-color: #349dd9;
+            border-width: 2px;
+            border-style: solid;
+            background: none;
+            margin: 0;
+        }
+
+        .title_div {
+            position: absolute;
+            border-color: #349dd9;
+            border-width: 0px;
+            border-style: none;
+            background: none;
+            color: white;
+            margin: 0;
+        }
+
+        .title1 {
+            color: white;
+            font-family: 黑体;
+            font-size: 15px;
+            float: left;
+            margin-top: 130px;
+        }
+
+        .title2 {
+            color: white;
+            font-family: 黑体;
+            font-size: 15px;
+            text-align: center;
+        }
+
+        .data {
+            background-color: #093134;
+            border: solid 0px green;
+            float: right;
+        }
+
+        .textarea {
+            background-color: #093134;
+            color: white;
+            font-size: 12px;
+        }
+
+        div input {
+            font-size: 20px;
+            text-align: center;
+            font-family: 黑体;
+            color: gray;
+            float: left;
+        }
+
+        #jqmeter-container {
+            width: 45%;
+            height: 100%;
+            margin-top: 1px;
+            float: left;
+        }
+
+        /* 表格样式 */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid black;
+        }
+
+        th {
+            background-color: #08333a;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #08333a;
+        }
+
+        /* 下拉框样式 */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            z-index: 1;
+            max-height: 200px;
+            overflow: auto;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+    </style>
+
+</head>
+
+
+<body class="zh_CN CN" style="width: 1920px; height: 720px; background-image: url(source/backgroundimg.png); transform: scale(0.885); transform-origin: left top 0px; ">
+
+    <div class="main" style="visibility: visible;">
+        <!-- 标题 -->
+        <div class="title_div" style="left: 485px; top: 0px; width: 950px; height: 57px; ">
+            <div class="-datav-wraper" style="width: 950px; height: 57px; border-width: 0px; background-image: url(source/title_img2.png); background-repeat: no-repeat; background-size: 100% 100%; "></div>
+        </div>
+
+        <!-- 模拟方案 -->
+        <div class="datadiv" style="left: 14px; top: 70px; width: 803px; height: 1080px;">
+            <div class="bg-inner" style="background-color: #607b80;width: 100%; height: 6%; border: solid 1px #349dd9; opacity:0.8">
+                <div style="font-size: 20px; text-align: center; color: white; margin-top: 10px">模拟方案</div>
+            </div>
+
+            <!-- 已有模型方案 -->
+            <div class="bg-inner" style="background: none; width: 100%; height: 44%; border: solid 1px #349dd9; opacity: 0.8">
+                <div class="title1" style="width:15%;height:10%;">已有方案</div>
+                <div class="data" style="width: 85%; height: 80%;">
+                    <div class="textarea" style="width:100%;height:80%" id="models">
+                        <select id="select_ele" style="width: 95%; height: 15%; margin-top: 50px; margin-left: 20px"> </select>
+                    </div>
+                </div>
+
+                <div style="width:100%;height:20%; margin-left:100px" id="models">
+                    <input style="width:120px;height:30px;margin:10px;color:red" type="button" id="del" value="删除模型" />
+                    <input style="width:120px;height:30px;margin:10px;color:red" type="button" id="run" value="开始计算" />
+                    <input style="width:120px;height:30px;margin:10px;color:red" type="button" id="stop" value="停止计算" />
+                    <input style="width:120px;height:30px;margin:10px;color:red" type="button" id="iter_cal" value="迭代计算" />
+                    <input style="width:120px;height:30px;margin:10px;color:red" type="button" id="run_quick" value="一维快速计算" />
+                    <div id="jqmeter-container"></div>  <!-- 进度条 -->
+                </div>
+            </div>
+
+            <!-- 新建方案、闸站调度 -->
+            <div class="bg-inner" style="background: none; width: 100%; height: 44%; border: solid 1px #349dd9;">
+                <div class="title1" style="width:100%;height:5%;margin-top:10px">新建方案、闸站调度</div>
+                <div style="display:flex; justify-content:space-evenly; align-items:center; width:100%; height:12%">
+                    <input style="width:150px;height:30px;margin:10px;color:red" type="button" id="xjfa" value="新建方案" />
+                    <input style="width:150px;height:30px;margin:10px;color:red" type="button" id="auto_forcast" value="自动预报" />
+
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="initial" value="改初始条件" />
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="boundry" value="改边界条件" />
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="zzdd" value="改闸站调度" />
+
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="optimize_dispatch" value="设置优化调度" />
+                </div>
+
+                <div style="display:flex; justify-content:space-evenly; align-items:center; width:100%; height:12%">
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="change_modelnamedesc" value="改模型名" />
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="rf_model" value="改产汇流模型" />
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="get_bndinfo" value="获取边界条件" />
+                    <input style="width:160px;height:30px;margin:10px;color:red" type="button" id="get_initial_info" value="获取初始水情" />
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="get_optimize_dispatch" value="获取优化调度目标" />
+                </div>
+
+                <div style="display:flex; justify-content:space-evenly; align-items:center; width:100%; height:12%">
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="get_tjres" value="统计结果" />
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="get_gcres" value="过程结果" />
+
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="get_gisgc_polygon" value="GIS过程面" />
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="get_sampleline" value="样板线" />
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="get_gisline_data" value="线结果" />
+
+                    <input style="width:160px;height:30px;margin:10px;color:red" type="button" id="get_gistj" value="GIS线统计结果" />
+                    <input style="width:160px;height:30px;margin:10px;color:red" type="button" id="get_gistj_polygon" value="GIS面统计结果" />
+
+                </div>
+
+                <div style="display:flex; justify-content:space-evenly; align-items:center; width:100%; height:12%">
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="getrf_model" value="获取产汇流类型" />
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="wrynd" value="获取纵剖" />
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="get_pointres" value="查询某点结果" />
+                    <input style="width:160px;height:30px;margin:10px;color:red" type="button" id="sections" value="河道断面清单" />
+                    <input style="width:160px;height:30px;margin:10px;color:red" type="button" id="level_q" value="获取断面结果" />
+                    <input style="width:160px;height:30px;margin:10px;color:red" type="button" id="section_data" value="获取原始断面(河)" />
+
+                </div>
+
+                <div style="display:flex; justify-content:space-evenly; align-items:center; width:100%; height:12%">
+                    <input style="width:160px;height:30px;margin:10px;color:red" type="button" id="get_section_point" value="获取原始断面(点)" />
+                    <input style="width:160px;height:30px;margin:10px;color:red" type="button" id="get_atreach" value="获取监测断面" />
+                    <input style="width:160px;height:30px;margin:10px;color:red" type="button" id="get_stationinfo" value="获取站点" />
+                    <input style="width:160px;height:30px;margin:10px;color:red" type="button" id="get_str_ruledd_info" value="获取规则调度" />
+                    <input style="width:160px;height:30px;margin:10px;color:red" type="button" id="change_reachbreak" value="设置溃口" />
+                    <input style="width:160px;height:30px;margin:10px;color:red" type="button" id="get_reachbreak" value="获取溃口" />
+                </div>
+
+                <div style="display:flex; justify-content:space-evenly; align-items:center; width:100%; height:12%">
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="gate_res" value="单建筑流量" />
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="get_sectionq" value="多断面流量" />
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="level_q_list" value="多断面结果" />
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="get_catchmentq" value="子流域洪水" />
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="get_gatestate" value="最新工情" />
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="get_now_water" value="最新水情" />
+                </div>
+
+                <div style="display:flex; justify-content:space-evenly; align-items:center; width:100%; height:12%">
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="get_design_flood" value="获取设计洪水" />
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="get_res_warning" value="预警信息" />
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="get_nsbd_sectioninfo" value="南水北调" />
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="get_history_autoforcast_list" value="预报清单" />
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="get_history_autoforcast_res" value="预报数据" />
+                    <input style="width:130px;height:30px;margin:10px;color:red" type="button" id="get_business_view" value="业务视角" />
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="model_business" value="模型业务" />
+                </div>
+
+                <div style="display:flex; justify-content:space-evenly; align-items:center; width:100%; height:12%">
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="get_mountain_forecast_flood" value="山洪预报" />
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="get_faultgate_baseinfo" value="闸门基础信息" />
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="set_faultgate" value="设置故障闸门" />
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="get_faultgate" value="获取故障设置" />
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="get_dispatch_plan" value="获取调度指令" />
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="get_reachsection_location" value="断面位置" />
+                </div>
+
+                <div style="display:flex; justify-content:space-evenly; align-items:center; width:100%; height:12%">
+                    <input style="width:200px;height:30px;margin:10px;color:red" type="button" id="del_history_autoforcast" value="删历史预报" />
+                    <input style="width:200px;height:30px;margin:10px;color:red" type="button" id="get_rain_flood_list" value="场次洪水清单" />
+                    <input style="width:200px;height:30px;margin:10px;color:red" type="button" id="get_rainflood_plan_list" value="洪水方案清单" />
+                    <input style="width:200px;height:30px;margin:10px;color:red" type="button" id="change_rainflood_recomplan" value="改洪水推荐方案" />
+                    <input style="width:200px;height:30px;margin:10px;color:red" type="button" id="important_inspect" value="重点巡查" />
+                </div>
+
+                <div style="display:flex; justify-content:space-evenly; align-items:center; width:100%; height:12%">
+                    <input style="width:200px;height:30px;margin:10px;color:red" type="button" id="get_control_strs" value="获取可控建筑ID" />
+                    <input style="width:240px;height:30px;margin:10px;color:red" type="button" id="backcal_resdd" value="水库调度反推" />
+                </div>
+            </div>
+
+            </div>
+
+        <!-- 模型交互区 -->
+        <div class="datadiv" style="left: 830px; top: 70px; width: 360px; height: 1080px;">
+            <div class="bg-inner" style="background-color: #607b80;width: 100%; height: 6%; border: solid 1px #349dd9; opacity:0.8">
+                <div style="font-size: 20px; text-align:center; color:white;margin-top:10px">模型交互区</div>
+            </div>
+
+            <div class="bg-inner" style=" background: none; width: 100%; height: 94%; border: solid 1px #349dd9; opacity: 0.8">
+                <div class="textarea" id="sound" style="width:100%; height: 100%;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 模型要素 -->
+        <div class="datadiv" style="left: 1204px; top: 70px; width: 703px; height: 1080px; ">
+            <div class="bg-inner" style="background-color: #607b80;width: 100%; height: 6%; border: solid 1px #349dd9; opacity:0.8">
+                <div style="font-size: 20px; text-align: center; color: white; margin-top: 10px">模型要素</div>
+            </div>
+
+            <!-- 节制闸 -->
+            <div class="bg-inner" style="background: none; width: 100%; height: 94%; border: solid 1px #349dd9; opacity: 0.8">
+                <div class="title1" style="width: 12%; height: 100%; margin-top: 60px">闸门调度</div>
+                <div class="data" style="width:88%;height:100%">
+                    <div class="textarea" style="width:100%;height:100%" id="jzz">111111</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+
+
+</html>

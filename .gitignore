@@ -1,0 +1,30 @@
+/wg_models/
+
+# Build output
+/bin/
+/obj/
+
+# Visual Studio
+/.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / ReSharper
+_ReSharper*/
+*.DotSettings.user
+
+# Test and coverage
+/TestResults/
+*.coverage
+*.coveragexml
+
+# Logs and temp files
+*.log
+*.tmp
+*.temp
+
+# OS files
+Thumbs.db
+Desktop.ini

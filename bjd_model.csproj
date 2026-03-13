@@ -1,0 +1,296 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{5A3FE33A-1C2C-404C-851E-F03C6D87A1AF}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>bjd_model</RootNamespace>
+    <AssemblyName>bjd_model</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <UseIISExpress>true</UseIISExpress>
+    <IISExpressSSLPort />
+    <IISExpressAnonymousAuthentication />
+    <IISExpressWindowsAuthentication />
+    <IISExpressUseClassicPipelineMode />
+    <Use64BitIISExpress />
+    <UseGlobalApplicationHostFile />
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="AipSdk">
+      <HintPath>API\baidu_sound\AipSdk.dll</HintPath>
+    </Reference>
+    <Reference Include="DHI.DHIfl, Version=14.0.0.0, Culture=neutral, PublicKeyToken=c513450b5d0bf0bf, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>API\mike\DHI.DHIfl.dll</HintPath>
+    </Reference>
+    <Reference Include="DHI.Generic.MikeZero.DFS, Version=14.0.0.0, Culture=neutral, PublicKeyToken=c513450b5d0bf0bf, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>API\mike\DHI.Generic.MikeZero.DFS.dll</HintPath>
+    </Reference>
+    <Reference Include="DHI.Generic.MikeZero.EUM, Version=14.0.0.0, Culture=neutral, PublicKeyToken=c513450b5d0bf0bf, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>API\mike\DHI.Generic.MikeZero.EUM.dll</HintPath>
+    </Reference>
+    <Reference Include="DHI.Mike1D.CrossSectionModule, Version=14.0.0.0, Culture=neutral, PublicKeyToken=c513450b5d0bf0bf, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>API\mike\DHI.Mike1D.CrossSectionModule.dll</HintPath>
+    </Reference>
+    <Reference Include="DHI.Mike1D.Generic, Version=14.0.0.0, Culture=neutral, PublicKeyToken=c513450b5d0bf0bf, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>API\mike\DHI.Mike1D.Generic.dll</HintPath>
+    </Reference>
+    <Reference Include="DHI.Mike1D.ResultDataAccess, Version=14.0.0.0, Culture=neutral, PublicKeyToken=c513450b5d0bf0bf, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>API\mike\DHI.Mike1D.ResultDataAccess.dll</HintPath>
+    </Reference>
+    <Reference Include="DHI.PFS, Version=14.0.0.0, Culture=neutral, PublicKeyToken=c513450b5d0bf0bf, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>API\mike\DHI.PFS.dll</HintPath>
+    </Reference>
+    <Reference Include="gdalconst_csharp, Version=3.6.4.0, Culture=neutral, PublicKeyToken=db5a52b08dc5b321, processorArchitecture=MSIL">
+      <HintPath>packages\GDAL.3.6.4\lib\netstandard2.0\gdalconst_csharp.dll</HintPath>
+    </Reference>
+    <Reference Include="gdal_csharp, Version=3.6.4.0, Culture=neutral, PublicKeyToken=db5a52b08dc5b321, processorArchitecture=MSIL">
+      <HintPath>packages\GDAL.3.6.4\lib\netstandard2.0\gdal_csharp.dll</HintPath>
+    </Reference>
+    <Reference Include="IKVM.OpenJDK.Core">
+      <HintPath>API\java_dll\IKVM.OpenJDK.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="IKVM.Runtime">
+      <HintPath>API\java_dll\IKVM.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="IKVM.Runtime.JNI">
+      <HintPath>API\java_dll\IKVM.Runtime.JNI.dll</HintPath>
+    </Reference>
+    <Reference Include="Kdbndp">
+      <HintPath>API\rdjcdb_net45\Kdbndp.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="MySqlConnector, Version=2.0.0.0, Culture=neutral, PublicKeyToken=d33d3e53aa5f8c92, processorArchitecture=MSIL">
+      <HintPath>packages\MySqlConnector.2.2.6\lib\net461\MySqlConnector.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>API\baidu_sound\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI">
+      <HintPath>API\excel\NPOI.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI.OOXML">
+      <HintPath>API\excel\NPOI.OOXML.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI.OpenXml4Net">
+      <HintPath>API\excel\NPOI.OpenXml4Net.dll</HintPath>
+    </Reference>
+    <Reference Include="NPOI.OpenXmlFormats">
+      <HintPath>API\excel\NPOI.OpenXmlFormats.dll</HintPath>
+    </Reference>
+    <Reference Include="ogr_csharp, Version=3.6.4.0, Culture=neutral, PublicKeyToken=db5a52b08dc5b321, processorArchitecture=MSIL">
+      <HintPath>packages\GDAL.3.6.4\lib\netstandard2.0\ogr_csharp.dll</HintPath>
+    </Reference>
+    <Reference Include="osr_csharp, Version=3.6.4.0, Culture=neutral, PublicKeyToken=db5a52b08dc5b321, processorArchitecture=MSIL">
+      <HintPath>packages\GDAL.3.6.4\lib\netstandard2.0\osr_csharp.dll</HintPath>
+    </Reference>
+    <Reference Include="String_Date">
+      <HintPath>API\java_dll\String_Date.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Configuration.Install" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data.OracleClient" />
+    <Reference Include="System.Diagnostics.DiagnosticSource, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Diagnostics.DiagnosticSource.6.0.0\lib\net461\System.Diagnostics.DiagnosticSource.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Drawing.Design" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Memory.4.5.5\lib\net461\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>API\rdjcdb_net45\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Web.DynamicData" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="VecToArrayList">
+      <HintPath>API\java_dll\VecToArrayList.dll</HintPath>
+    </Reference>
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="source\backgroundimg.png" />
+    <Content Include="build_model.html" />
+    <Content Include="source\config.js" />
+    <Content Include="source\jqmeter.min.js" />
+    <Content Include="source\jquery-3.2.1.js" />
+    <Content Include="source\jquery.cookie.js" />
+    <Content Include="source\title_img1.png" />
+    <Content Include="source\title_img2.png" />
+    <Content Include="Web.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CatchMent\RFStationService.cs" />
+    <Compile Include="CatchMent\RR11.cs" />
+    <Compile Include="CatchMent\Xaj_Model.cs" />
+    <Compile Include="Common\ArcgisJson.cs" />
+    <Compile Include="Common\DataBase.cs" />
+    <Compile Include="Common\Dfs0.cs" />
+    <Compile Include="Common\Excel_Util.cs" />
+    <Compile Include="Common\File_Common.cs" />
+    <Compile Include="Common\GeoJson.cs" />
+    <Compile Include="Common\Gis_Service.cs" />
+    <Compile Include="Common\Mysql.cs" />
+    <Compile Include="Common\Speech.cs" />
+    <Compile Include="Const_Global\Const_Global.cs" />
+    <Compile Include="GdalConfiguration.cs" />
+    <Compile Include="HydroModel.cs" />
+    <Compile Include="Mike Flood\Couple.cs" />
+    <Compile Include="Mike11\Ad11.cs" />
+    <Compile Include="Mike11\Bnd11.cs" />
+    <Compile Include="Mike11\Hd11.cs" />
+    <Compile Include="Mike11\Nwk11.cs" />
+    <Compile Include="Mike11\Reach.cs" />
+    <Compile Include="Mike11\Res11.cs" />
+    <Compile Include="Mike11\Res11\Res11.Balance.cs" />
+    <Compile Include="Mike11\Res11\Res11.Converters.cs" />
+    <Compile Include="Mike11\Res11\Res11.Description.cs" />
+    <Compile Include="Mike11\Res11\Res11.GateFlow.cs" />
+    <Compile Include="Mike11\Res11\Res11.Gate.cs" />
+    <Compile Include="Mike11\Res11\Res11.Gis.cs" />
+    <Compile Include="Mike11\Res11\Res11.Models.cs" />
+    <Compile Include="Mike11\Res11\Res11.Persistence.Gis.cs" />
+    <Compile Include="Mike11\Res11\Res11.Persistence.Load.cs" />
+    <Compile Include="Mike11\Res11\Res11.Persistence.Write.cs" />
+    <Compile Include="Mike11\Res11\Res11.Profile.cs" />
+    <Compile Include="Mike11\Res11\Res11.Query.cs" />
+    <Compile Include="Mike11\Res11\Res11.ReachVolume.cs" />
+    <Compile Include="Mike11\Res11\Res11.Reports.cs" />
+    <Compile Include="Mike11\Res11\Res11.Reservoir.cs" />
+    <Compile Include="Mike11\Res11\Res11.Risk.cs" />
+    <Compile Include="Mike11\Res11\Res11.Section.cs" />
+    <Compile Include="Mike11\Res11\Res11.Serialization.cs" />
+    <Compile Include="Mike11\Res11\Res11.TimeSeries.cs" />
+    <Compile Include="Mike11\Res11\Res11.Warning.cs" />
+    <Compile Include="Mike11\Res11\Res11.WaterQuality.cs" />
+    <Compile Include="Mike11\Res11\Res11.Xzhq.cs" />
+    <Compile Include="Mike11\Resoptdd.cs" />
+    <Compile Include="Mike11\Sim11.cs" />
+    <Compile Include="Mike11\SingleResoptdd.cs" />
+    <Compile Include="Mike11\WgOptdd.cs" />
+    <Compile Include="Mike11\Xns11.cs" />
+    <Compile Include="Mike21\Dfsu.cs" />
+    <Compile Include="Mike21\M21fm.cs" />
+    <Compile Include="Mike21\Mdf.cs" />
+    <Compile Include="Mike21\Mesh.cs" />
+    <Compile Include="Model_Ser.ashx.cs">
+      <DependentUpon>Model_Ser.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Model_Ser.ashx" />
+    <None Include="packages.config" />
+    <None Include="Web.Debug.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </None>
+    <None Include="Web.Release.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>True</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>7046</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:7046/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+          <servers defaultServer="SelfHostServer">
+            <server name="SelfHostServer" exePath="" cmdArgs="" url="http://localhost:7046/" workingDir="" />
+          </servers>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
