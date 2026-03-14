@@ -297,6 +297,76 @@ namespace bjd_model.Mike11
 
             return res_list;
         }
+
+        //请求各流域面雨量过程
+        public static Dictionary<string, Dictionary<DateTime, double>> Get_Catchment_RainGC_FromHttpRequest(string http_url)
+        {
+            Dictionary<string, Dictionary<DateTime, double>> res_list = new Dictionary<string, Dictionary<DateTime, double>>();
+
+            //请求各流域时段雨量
+            string catchment_q = File_Common.Get_HttpReSponse(http_url);
+
+            dynamic jsonObject = JsonConvert.DeserializeObject(catchment_q);
+            JObject json_obj = JObject.Parse(jsonObject["data"].ToString());
+
+            //逐个流域解析
+            foreach (var property in json_obj.Properties())
+            {
+                string catchment_id = property.Name;
+                Dictionary<DateTime, double> q_dic = property.Value.ToObject<Dictionary<DateTime, double>>();
+
+                res_list.Add(catchment_id, q_dic);
+            }
+            return res_list;
+        }
+
+        //请求各流域洪水过程(NAM 计算)
+        public static Dictionary<string, Dictionary<DateTime, double>> Get_Catchment_FloodGC_FromHttpRequest(HydroModel hydromodel, string http_url, string request_pars)
+        {
+            Dictionary<string, Dictionary<DateTime, double>> res_list = new Dictionary<string, Dictionary<DateTime, double>>();
+
+            //向服务端提交参数并获取结果
+            string catchment_q = File_Common.Post_HttpReSponse(http_url, request_pars);
+
+            dynamic jsonObject = JsonConvert.DeserializeObject(catchment_q);
+            JObject json_obj = JObject.Parse(jsonObject["discharge"].ToString());
+
+            //逐个流域解析
+            foreach (var property in json_obj.Properties())
+            {
+                string catchment_id = property.Name;
+                Dictionary<DateTime, double> q_dic = property.Value.ToObject<Dictionary<DateTime, double>>();
+                res_list.Add(catchment_id, q_dic);
+            }
+            return res_list;
+        }
+
+        //请求各流域洪水过程(通用)
+        public static Dictionary<string, Dictionary<DateTime, double>> Get_CatchmentQ_FromHttpRequest(HydroModel hydromodel, string http_url, string request_pars = "")
+        {
+            Dictionary<string, Dictionary<DateTime, double>> res_list = new Dictionary<string, Dictionary<DateTime, double>>();
+
+            //根据是否有请求体选择 GET 或 POST
+            string catchment_q = request_pars == "" ? File_Common.Get_HttpReSponse(http_url) : File_Common.Post_HttpReSponse(http_url, request_pars);
+
+            dynamic jsonObject = JsonConvert.DeserializeObject(catchment_q);
+            JObject json_obj = JObject.Parse(jsonObject["data"].ToString());
+
+            //逐个流域解析
+            foreach (var property in json_obj.Properties())
+            {
+                string catchment_id = property.Name;
+                Dictionary<DateTime, double> q_dic = property.Value.ToObject<Dictionary<DateTime, double>>();
+                if (hydromodel.ModelGlobalPars.Ahead_hours != 0)
+                {
+                    DateTime starttime = q_dic.First().Key.Subtract(new TimeSpan(hydromodel.ModelGlobalPars.Ahead_hours, 0, 0));
+                    q_dic = Dfs0.Dfs0_AddToStart_Usevalue0(q_dic, starttime);
+                }
+
+                res_list.Add(catchment_id, q_dic);
+            }
+            return res_list;
+        }
         #endregion ********************************************************
     }
 }
