@@ -474,7 +474,7 @@ namespace bjd_model.Mike11
         public static void Remove_TSSections(ref Dictionary<string, Dictionary<float, PointXY>> reach_section)
         {
             //贾鲁河流域一些特殊断面
-            Dictionary<string, List<double>> jlh_tssection = WG_INFO.Get_JLH_TSSection();
+            Dictionary<string, List<double>> jlh_tssection = Item_Info.Get_JLH_TSSection();
 
             //去除这些断面
             for (int i = 0; i < reach_section.Count; i++)

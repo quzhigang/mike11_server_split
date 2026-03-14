@@ -31,8 +31,8 @@ namespace bjd_model.Mike11
             Dictionary<DateTime, double> res_inflow = res_floodin_res.Keys.Contains(res_name) ? res_floodin_res[res_name] : null;
 
             //获取水库的初始水位(先从数据库中，没有则从模型中)
-            double initial_level1 = WG_INFO.GetRes_InitialValue_FromDB(hydromodel.Modelname, dd_target.name);
-            double initial_level2 = WG_INFO.GetRes_InitialValue_FromModel(hydromodel, dd_target.name);
+            double initial_level1 = Item_Info.GetRes_InitialValue_FromDB(hydromodel.Modelname, dd_target.name);
+            double initial_level2 = Item_Info.GetRes_InitialValue_FromModel(hydromodel, dd_target.name);
             double initial_level = initial_level1 == 0 ? initial_level2 : initial_level1;
 
             //获取水库的最优闸站调度过程
@@ -76,8 +76,8 @@ namespace bjd_model.Mike11
             string dd_desc = "";
 
             //获取该水库的溢洪道和泄洪洞信息
-            Struct_BasePars res_xhd = WG_INFO.Get_Res_YHDXHD_StrInfo(res_name, "泄洪洞");
-            Struct_BasePars res_yhd = WG_INFO.Get_Res_YHDXHD_StrInfo(res_name, "溢洪道");
+            Struct_BasePars res_xhd = Item_Info.Get_Res_YHDXHD_StrInfo(res_name, "泄洪洞");
+            Struct_BasePars res_yhd = Item_Info.Get_Res_YHDXHD_StrInfo(res_name, "溢洪道");
 
             //未达成目标
             if (!is_possible)
@@ -165,8 +165,8 @@ namespace bjd_model.Mike11
             Reservoir res_info = Reservoir.Get_Res_Info(model_instance, res_name);
 
             //获取该水库的溢洪道和泄洪洞信息
-            Struct_BasePars res_yhd = WG_INFO.Get_Res_YHDXHD_StrInfo(res_name, "溢洪道");
-            Struct_BasePars res_xhd = WG_INFO.Get_Res_YHDXHD_StrInfo(res_name, "泄洪洞");
+            Struct_BasePars res_yhd = Item_Info.Get_Res_YHDXHD_StrInfo(res_name, "溢洪道");
+            Struct_BasePars res_xhd = Item_Info.Get_Res_YHDXHD_StrInfo(res_name, "泄洪洞");
 
             //获取该水库初始时刻出库流量(未来预演为0，预报为当前时刻监测出库流量)
             double initial_outq = Get_ResInitial_Outq(hydromodel, res_yhd.str_name, res_xhd.str_name);
@@ -307,7 +307,7 @@ namespace bjd_model.Mike11
             //更新数据库里的模型状态信息和模型实体
             hydromodel.Model_state = Model_State.Iscalting;
             string start_simulate_time = DateTime.Now.ToString(Model_Const.TIMEFORMAT);
-            string[] model_info = WG_INFO.Get_Model_Info(hydromodel, start_simulate_time, true);
+            string[] model_info = Item_Info.Get_Model_Info(hydromodel, start_simulate_time, true);
             HydroModel.Update_ModelStateInfo(hydromodel, model_info, false);
             Model_Const.Now_Model_State = Model_State.Iscalting;
 
@@ -319,7 +319,7 @@ namespace bjd_model.Mike11
             Mysql_GlobalVar.now_instance = model_instance;
 
             //修改模型闸站调度
-            WG_INFO.Update_AllStr_DdInfo(ref hydromodel, res_optiddinfo);
+            Item_Info.Update_AllStr_DdInfo(ref hydromodel, res_optiddinfo);
 
             //先通过一次试算还原初始水情
             if (hydromodel.ModelGlobalPars.Ahead_hours != 0)
@@ -361,7 +361,7 @@ namespace bjd_model.Mike11
             {
                 hydromodel.Model_state = hydromodel.GetProgress().now_progress_value == 100 ? Model_State.Finished : Model_State.Error;
             }
-            model_info = WG_INFO.Get_Model_Info(hydromodel, start_simulate_time, false);
+            model_info = Item_Info.Get_Model_Info(hydromodel, start_simulate_time, false);
             HydroModel.Update_ModelStateInfo(hydromodel, model_info[4], true);
             Model_Const.Now_Model_State = Model_State.Finished;
         }
@@ -370,7 +370,7 @@ namespace bjd_model.Mike11
         public static Dictionary<string, List<DdInfo>> Get_ResGate_OptimizeDd(HydroModel hydromodel)
         {
             //从数据库获取优化调度目标、约束等参数
-            string target_info = WG_INFO.Get_Model_SingleParInfo(hydromodel.Modelname, "mike11_dispatch_target_info");
+            string target_info = Item_Info.Get_Model_SingleParInfo(hydromodel.Modelname, "mike11_dispatch_target_info");
             if (target_info == null || target_info == "") return null;
             JArray jar = JArray.Parse(target_info);
 
@@ -392,8 +392,8 @@ namespace bjd_model.Mike11
             Dictionary<DateTime, double> res_inflow = Get_ResFlowIn_Gzdd(hydromodel, model_instance, dd_target.name);
 
             //获取水库的初始水位(先从数据库中，没有则从模型中)
-            double initial_level1 = WG_INFO.GetRes_InitialValue_FromDB(hydromodel.Modelname, dd_target.name);
-            double initial_level2 = WG_INFO.GetRes_InitialValue_FromModel(hydromodel, dd_target.name);
+            double initial_level1 = Item_Info.GetRes_InitialValue_FromDB(hydromodel.Modelname, dd_target.name);
+            double initial_level2 = Item_Info.GetRes_InitialValue_FromModel(hydromodel, dd_target.name);
             double initial_level = initial_level1 == 0? initial_level2: initial_level1;
 
             //获取水库的最优闸站调度过程
@@ -498,8 +498,8 @@ namespace bjd_model.Mike11
             Reservoir res_info = Reservoir.Get_Res_Info(model_instance, res_name);
 
             //获取该水库的溢洪道和泄洪洞信息
-            Struct_BasePars res_yhd = WG_INFO.Get_Res_YHDXHD_StrInfo(res_name, "溢洪道");
-            Struct_BasePars res_xhd = WG_INFO.Get_Res_YHDXHD_StrInfo(res_name, "泄洪洞");
+            Struct_BasePars res_yhd = Item_Info.Get_Res_YHDXHD_StrInfo(res_name, "溢洪道");
+            Struct_BasePars res_xhd = Item_Info.Get_Res_YHDXHD_StrInfo(res_name, "泄洪洞");
 
             //获取该水库初始时刻出库流量(未来预演为0，预报为当前时刻监测出库流量)
             double initial_outq = Get_ResInitial_Outq(hydromodel, res_yhd.str_name, res_xhd.str_name);
@@ -577,7 +577,7 @@ namespace bjd_model.Mike11
             if (hydromodel.ModelGlobalPars.Ahead_hours != 0)
             {
                 //从数据库获取当前闸门状态
-                List<Gate_StateInfo> gate_state = WG_INFO.Read_NowGateState();
+                List<Gate_StateInfo> gate_state = Item_Info.Read_NowGateState();
 
                 //逐一修改修改闸门调度方式
                 Dictionary<string, int> str_baseinfo = hydromodel.Mike11Pars.ControlstrList.Gatebaseinfo;
@@ -944,7 +944,7 @@ namespace bjd_model.Mike11
             Dictionary<string, List<DdInfo>> res = new Dictionary<string, List<DdInfo>>();
 
             //该水库的所有建筑
-            List<Struct_BasePars> res_allstr = WG_INFO.Get_Res_All_StrInfo(res_name);
+            List<Struct_BasePars> res_allstr = Item_Info.Get_Res_All_StrInfo(res_name);
 
             //加入全关调度信息
             for (int i = 0; i < res_allstr.Count; i++)

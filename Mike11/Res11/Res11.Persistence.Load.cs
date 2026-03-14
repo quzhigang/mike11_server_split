@@ -216,7 +216,7 @@ namespace bjd_model.Mike11
             string mdreach = "2、";
             for (int i = 0; i < reach_mt_segment.Count; i++)
             {
-                string reach_cnname = WG_INFO.Get_ReachChinaName(reach_mt_segment.ElementAt(i).Key);
+                string reach_cnname = Item_Info.Get_ReachChinaName(reach_mt_segment.ElementAt(i).Key);
                 mdreach += reach_cnname;
                 if (i > 2) break;  //只放3条河道
                 if (i != reach_mt_segment.Count - 1) mdreach += "、";
@@ -496,7 +496,7 @@ namespace bjd_model.Mike11
             result11.Add("zd_maxmin", maxmin_zz);
 
             //纵剖图标记点位置桩号
-            Dictionary<string, Dictionary<string, double>> jzz_str = WG_INFO.Get_Reachzpm_Lables();
+            Dictionary<string, Dictionary<string, double>> jzz_str = Item_Info.Get_Reachzpm_Lables();
             result11.Add("str_location", jzz_str);
 
             
@@ -511,7 +511,7 @@ namespace bjd_model.Mike11
         {
             Dictionary<string, object> res = new Dictionary<string, object>();
 
-            List<string> jlh_mainreach = WG_INFO.Get_MainReach_Names(Mysql_GlobalVar.now_instance,true);
+            List<string> jlh_mainreach = Item_Info.Get_MainReach_Names(Mysql_GlobalVar.now_instance,true);
             for (int i = 0; i < source_dic.Count; i++)
             {
                 string reach_name = source_dic.ElementAt(i).Key;
@@ -529,7 +529,7 @@ namespace bjd_model.Mike11
         {
             Dictionary<string, object> res = new Dictionary<string, object>();
 
-            List<string> jlh_mainreach = WG_INFO.Get_MainReach_Names(Mysql_GlobalVar.now_instance,true);
+            List<string> jlh_mainreach = Item_Info.Get_MainReach_Names(Mysql_GlobalVar.now_instance,true);
             for (int i = 0; i < source_dic.Count; i++)
             {
                 string reach_name = source_dic.ElementAt(i).Key;
@@ -547,7 +547,7 @@ namespace bjd_model.Mike11
         {
             Dictionary<string, object> res = new Dictionary<string, object>();
 
-            List<string> jlh_mainreach = WG_INFO.Get_MainReach_Names(Mysql_GlobalVar.now_instance,true);
+            List<string> jlh_mainreach = Item_Info.Get_MainReach_Names(Mysql_GlobalVar.now_instance,true);
             for (int i = 0; i < source_dic.Count; i++)
             {
                 string reach_name = source_dic.ElementAt(i).Key;

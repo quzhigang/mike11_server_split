@@ -222,7 +222,7 @@ namespace bjd_model.Mike11
             Dictionary<DateTime, Gate_State_Res> gate_state_res = new Dictionary<DateTime, Gate_State_Res>();
 
             //获取建筑物英文名字
-            string str_enname = WG_INFO.Get_StrEnglishName(strname, "", "");
+            string str_enname = Item_Info.Get_StrEnglishName(strname, "", "");
 
             //获取分水闸、泵站设计流量
             double design_discharge = 0;

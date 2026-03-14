@@ -43,7 +43,7 @@ namespace bjd_model.Mike11
             //如果闸门为流量类型，更新该闸门的基本信息
             if (con_str.Stratts.gate_type == 2)
             {
-                Struct_BasePars base_par = WG_INFO.Get_StrBaseInfo(strname);
+                Struct_BasePars base_par = Item_Info.Get_StrBaseInfo(strname);
                 Attributes source_stratts = new Attributes();
                 source_stratts.gate_count = base_par.gate_n;
                 source_stratts.gate_width = base_par.gate_b;
@@ -75,7 +75,7 @@ namespace bjd_model.Mike11
             //如果闸门为流量类型，更新该闸门的基本信息
             if(con_str.Stratts.gate_type == 2)
             {
-                Struct_BasePars base_par = WG_INFO.Get_StrBaseInfo(strname);
+                Struct_BasePars base_par = Item_Info.Get_StrBaseInfo(strname);
                 Attributes source_stratts = new Attributes();
                 source_stratts.gate_count = base_par.gate_n;
                 source_stratts.gate_width = base_par.gate_b;
@@ -217,7 +217,7 @@ namespace bjd_model.Mike11
                 normalstr.Strddgz = CtrDdtype.KXDU;
 
                 //获取基本参数
-                Struct_BasePars base_par = WG_INFO.Get_StrBaseInfo(normalstr.Strname);
+                Struct_BasePars base_par = Item_Info.Get_StrBaseInfo(normalstr.Strname);
 
                 //不让设置流量大于闸门设计流量
                 normalstr.Ddparams_double = Math.Min(base_par.design_q,ddparams_double); 
@@ -270,7 +270,7 @@ namespace bjd_model.Mike11
                 normalstr.Strddgz = CtrDdtype.KXDU;
 
                 //获取基本参数
-                Struct_BasePars base_par = WG_INFO.Get_StrBaseInfo(normalstr.Strname);
+                Struct_BasePars base_par = Item_Info.Get_StrBaseInfo(normalstr.Strname);
 
                 //水位流量关系
                 normalstr.Str_QHrelation = str_qhrelation;
@@ -314,7 +314,7 @@ namespace bjd_model.Mike11
                 normalstr.Strddgz = CtrDdtype.KXDU_TIME;
 
                 //获取基本参数
-                Struct_BasePars base_par = WG_INFO.Get_StrBaseInfo(normalstr.Strname);
+                Struct_BasePars base_par = Item_Info.Get_StrBaseInfo(normalstr.Strname);
 
                 //闸门类型设置为流量
                 Attributes stratts = normalstr.Stratts;
@@ -415,7 +415,7 @@ namespace bjd_model.Mike11
             if (controlstr == null) return;
 
             //获取该闸门的基本信息
-            Struct_BasePars str_basepar = WG_INFO.Get_StrBaseInfo(strname);
+            Struct_BasePars str_basepar = Item_Info.Get_StrBaseInfo(strname);
 
             //闸门操作时间
             double operate_time = Get_GateOperatetime(strname);

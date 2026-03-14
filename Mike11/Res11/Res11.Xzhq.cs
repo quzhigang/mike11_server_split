@@ -81,7 +81,7 @@ namespace bjd_model.Mike11
             Dictionary<string, Xzhq_FloodRes> xzhq_floodres = new Dictionary<string, Xzhq_FloodRes>();
             sub_xzhq_res = new Dictionary<string, Dictionary<DateTime, string>>();
 
-            List<Xzhq_Info> xzhq_list = WG_INFO.Get_XzhqInfo();
+            List<Xzhq_Info> xzhq_list = Item_Info.Get_XzhqInfo();
             for (int i = 0; i < xzhq_list.Count; i++)
             {
                 string stcd = xzhq_list[i].Stcd;
@@ -241,7 +241,7 @@ namespace bjd_model.Mike11
         public static Dictionary<string, Xzhq_FloodRes> Modify_Xzhq_FloodRes(Dictionary<string, Xzhq_FloodRes> xzhq_floodres)
         {
             Dictionary<string, Xzhq_FloodRes> xzhq_res = new Dictionary<string, Xzhq_FloodRes>();
-            List<Xzhq_Info> xzhq_list = WG_INFO.Get_XzhqInfo();
+            List<Xzhq_Info> xzhq_list = Item_Info.Get_XzhqInfo();
             List<Xzhq_Info> father_xzhq_list = Xzhq_Info.Get_Father_List(xzhq_list);
             Dictionary<string, List<string>> son_xzhq = Xzhq_Info.Get_Son_List(xzhq_list);
 

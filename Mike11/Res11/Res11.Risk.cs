@@ -44,7 +44,7 @@ namespace bjd_model.Mike11
             Dictionary<string, List<float>> discharge_max = Get_ZdRes_TimeMaxValue(discharge_zd);
             Dictionary<string, List<float>> speed_max = Get_ZdRes_TimeMaxValue(speed_zd);
 
-            List<string> main_reach = WG_INFO.Get_MainReach_Names(model_instance, true);
+            List<string> main_reach = Item_Info.Get_MainReach_Names(model_instance, true);
             Dictionary<string, List<Reach_MDRisk_Result>> reach_md_segment = Static_MDMT_ReachSeg(level_max, dd_zd, section_chainage, "漫堤", main_reach);
             Dictionary<string, List<Reach_MDRisk_Result>> reach_mt_segment = Static_MDMT_ReachSeg(level_max, td_zd, section_chainage, "漫滩", main_reach);
             Dictionary<string, List<Reach_CSRisk_Result>> reach_cs_segment = Static_CS_ReachSeg(speed_max, section_chainage);
@@ -64,7 +64,7 @@ namespace bjd_model.Mike11
             Dictionary<string, List<Reach_CSRisk_Result>> reach_cs_segment)
         {
             Dictionary<string, Dictionary<string, string>> zgq_risk = new Dictionary<string, Dictionary<string, string>>();
-            Dictionary<string, ZGQ_SectionInfo> zgq_section_info = WG_INFO.Get_ZGQ_SectionInfo();
+            Dictionary<string, ZGQ_SectionInfo> zgq_section_info = Item_Info.Get_ZGQ_SectionInfo();
 
             for (int i = 0; i < reach_result.Count; i++)
             {
@@ -138,7 +138,7 @@ namespace bjd_model.Mike11
         private static Dictionary<string, Reach_DGRisk_Result> Static_DG_ReachInfo(Dictionary<string, Dictionary<DateTime, List<float>>> discharge_zd)
         {
             Dictionary<string, Reach_DGRisk_Result> res = new Dictionary<string, Reach_DGRisk_Result>();
-            List<string> dg_reach = WG_INFO.Get_DG_Reach();
+            List<string> dg_reach = Item_Info.Get_DG_Reach();
             Dictionary<string, Dictionary<DateTime, List<float>>> dg_reach_discharge = new Dictionary<string, Dictionary<DateTime, List<float>>>();
             for (int i = 0; i < discharge_zd.Count; i++)
             {
@@ -152,7 +152,7 @@ namespace bjd_model.Mike11
             for (int i = 0; i < dg_reach_discharge.Count; i++)
             {
                 string reach_name = dg_reach_discharge.ElementAt(i).Key;
-                string reach_cnname = WG_INFO.Get_ReachChinaName(reach_name);
+                string reach_cnname = Item_Info.Get_ReachChinaName(reach_name);
                 Dictionary<DateTime, List<float>> reach_discharge = dg_reach_discharge.ElementAt(i).Value;
                 Dictionary<DateTime, float> lastsection_discharge = GetLastValue(reach_discharge);
                 float min_discharge = lastsection_discharge.Values.Min();
@@ -217,7 +217,7 @@ namespace bjd_model.Mike11
             Dictionary<string, List<float>> section_chainage)
         {
             Dictionary<string, List<Reach_CSRisk_Result>> res = new Dictionary<string, List<Reach_CSRisk_Result>>();
-            Dictionary<string, List<float>> reach_bc = WG_INFO.Get_Reach_NoDestorySpeed(section_chainage);
+            Dictionary<string, List<float>> reach_bc = Item_Info.Get_Reach_NoDestorySpeed(section_chainage);
             Dictionary<string, List<float>> reach_cs = new Dictionary<string, List<float>>();
             for (int i = 0; i < speed_max.Count; i++)
             {
@@ -225,7 +225,7 @@ namespace bjd_model.Mike11
                 List<float> reach_speed_max = speed_max.ElementAt(i).Value;
                 List<float> reach_bc_speed = reach_bc[reach_name];
                 List<float> chainage = section_chainage[reach_name];
-                string reach_cnname = WG_INFO.Get_ReachChinaName(reach_name);
+                string reach_cnname = Item_Info.Get_ReachChinaName(reach_name);
                 if (reach_cnname.Contains("连接河") || reach_cnname.Contains("分洪堰") ||
                     reach_cnname.Contains("泄洪洞") || reach_cnname.Contains("溢洪") ||
                     reach_cnname.Contains("保留区")) continue;
@@ -243,13 +243,13 @@ namespace bjd_model.Mike11
             for (int i = 0; i < reach_hb.Count; i++)
             {
                 string reach_name = reach_hb.ElementAt(i).Key;
-                string reach_cnname = WG_INFO.Get_ReachChinaName(reach_name);
+                string reach_cnname = Item_Info.Get_ReachChinaName(reach_name);
                 Dictionary<float, float> reach_segment = reach_hb.ElementAt(i).Value;
                 List<Reach_CSRisk_Result> reach_cs_list = new List<Reach_CSRisk_Result>();
                 for (int j = 0; j < reach_segment.Count; j++)
                 {
-                    double start_chainage = WG_INFO.Get_Design_Chainage(reach_name, reach_segment.ElementAt(j).Key);
-                    double end_chainage = WG_INFO.Get_Design_Chainage(reach_name, reach_segment.ElementAt(j).Value);
+                    double start_chainage = Item_Info.Get_Design_Chainage(reach_name, reach_segment.ElementAt(j).Key);
+                    double end_chainage = Item_Info.Get_Design_Chainage(reach_name, reach_segment.ElementAt(j).Value);
 
                     double tempt = 0;
                     if (end_chainage < start_chainage)
@@ -280,7 +280,7 @@ namespace bjd_model.Mike11
                 List<float> reach_level_max = level_max[reach_name];
                 List<float> reach_dd_level = dd_zd[reach_name];
                 List<float> chainage = section_chainage[reach_name];
-                string reach_cnname = WG_INFO.Get_ReachChinaName(reach_name);
+                string reach_cnname = Item_Info.Get_ReachChinaName(reach_name);
                 if (reach_cnname.Contains("连接河") || reach_cnname.Contains("分洪堰") ||
                     reach_cnname.Contains("泄洪洞") || reach_cnname.Contains("溢洪") || reach_cnname.Contains("溃口支流")) continue;
 
@@ -296,13 +296,13 @@ namespace bjd_model.Mike11
             for (int i = 0; i < reach_hb.Count; i++)
             {
                 string reach_name = reach_hb.ElementAt(i).Key;
-                string reach_cnname = WG_INFO.Get_ReachChinaName(reach_name);
+                string reach_cnname = Item_Info.Get_ReachChinaName(reach_name);
                 Dictionary<float, float> reach_segment = reach_hb.ElementAt(i).Value;
                 List<Reach_MDRisk_Result> reach_md_list = new List<Reach_MDRisk_Result>();
                 for (int j = 0; j < reach_segment.Count; j++)
                 {
-                    double start_chainage = WG_INFO.Get_Design_Chainage(reach_name, reach_segment.ElementAt(j).Key);
-                    double end_chainage = WG_INFO.Get_Design_Chainage(reach_name, reach_segment.ElementAt(j).Value);
+                    double start_chainage = Item_Info.Get_Design_Chainage(reach_name, reach_segment.ElementAt(j).Key);
+                    double end_chainage = Item_Info.Get_Design_Chainage(reach_name, reach_segment.ElementAt(j).Value);
 
                     double tempt = 0;
                     if (end_chainage < start_chainage)

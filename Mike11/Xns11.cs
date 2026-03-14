@@ -2937,7 +2937,7 @@ namespace bjd_model.Mike11
         public static Dictionary<double, double> Get_Res_LevelVolume(string model_instance, string res_name)
         {
             Dictionary<double, double> result = new Dictionary<double, double>();
-            List<Reservoir> res_list = WG_INFO.Get_ResInfo(model_instance);
+            List<Reservoir> res_list = Item_Info.Get_ResInfo(model_instance);
 
             for (int i = 0; i < res_list.Count; i++)
             {
@@ -2955,7 +2955,7 @@ namespace bjd_model.Mike11
         //根据名称获取指定水库
         public static Reservoir Get_Res_Info(string model_instance, string res_name)
         {
-            List<Reservoir> res_list = WG_INFO.Get_ResInfo(model_instance);
+            List<Reservoir> res_list = Item_Info.Get_ResInfo(model_instance);
 
             for (int i = 0; i < res_list.Count; i++)
             {

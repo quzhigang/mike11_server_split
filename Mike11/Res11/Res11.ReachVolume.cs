@@ -37,7 +37,7 @@ namespace bjd_model.Mike11
         public static Dictionary<string, Dictionary<DateTime, double>> Get_Reach_Volume(HydroModel hydromodel)
         {
             Dictionary<string, Dictionary<DateTime, double>> reach_volumes = new Dictionary<string, Dictionary<DateTime, double>>();
-            List<ReachInfo> main_reach = WG_INFO.Get_MainReachInfo(Mysql_GlobalVar.now_instance);
+            List<ReachInfo> main_reach = Item_Info.Get_MainReachInfo(Mysql_GlobalVar.now_instance);
 
             //遍历主河道
             for (int i = 0; i < main_reach.Count; i++)

@@ -146,7 +146,7 @@ namespace bjd_model.Mike11
                 string near_fskname;
                 double near_fskchainage;
                 AtReach first_atreach = AtReach.Get_Atreach(reachname, first_chainage);
-                WG_INFO.Get_NextNearStr(hydromodel, first_atreach, GateType.LLZ, out near_fskname, out near_fskchainage);
+                Item_Info.Get_NextNearStr(hydromodel, first_atreach, GateType.LLZ, out near_fskname, out near_fskchainage);
                 string[] near_fskinfo = Get_Nearstr_Info(hydromodel, near_fskname, near_fskchainage, first_chainage, wrw_speed, GateType.LLZ);
                 location_info[7] = near_fskinfo[0]; location_info[8] = near_fskinfo[1];
 
@@ -161,7 +161,7 @@ namespace bjd_model.Mike11
                 //下一个最近的退水闸
                 string near_tszname;
                 double near_tszchainage;
-                WG_INFO.Get_NextNearStr(hydromodel, first_atreach, GateType.PBZ, out near_tszname, out near_tszchainage);
+                Item_Info.Get_NextNearStr(hydromodel, first_atreach, GateType.PBZ, out near_tszname, out near_tszchainage);
                 string[] near_tszinfo = Get_Nearstr_Info(hydromodel, near_tszname, near_tszchainage, first_chainage, wrw_speed, GateType.PBZ);
                 location_info[9] = near_tszinfo[0]; location_info[10] = near_tszinfo[1];
 
@@ -176,7 +176,7 @@ namespace bjd_model.Mike11
                 //下一个最近的节制闸
                 string near_jzzname;
                 double near_jzzchainage;
-                WG_INFO.Get_NextNearStr(hydromodel, first_atreach, GateType.YLZ, out near_jzzname, out near_jzzchainage);
+                Item_Info.Get_NextNearStr(hydromodel, first_atreach, GateType.YLZ, out near_jzzname, out near_jzzchainage);
                 string[] near_jzzinfo = Get_Nearstr_Info(hydromodel, near_jzzname, near_jzzchainage, first_chainage, wrw_speed, GateType.YLZ);
                 location_info[11] = near_jzzinfo[0]; location_info[12] = near_jzzinfo[1];
 
@@ -288,7 +288,7 @@ namespace bjd_model.Mike11
         private static string[] Get_Nearstr_Info(HydroModel hydromodel, string near_strname, double near_strchainage, double first_chainage, double wrw_speed, GateType str_type)
         {
             string[] str_info = new string[2];
-            string near_fsk_cnname = WG_INFO.Get_StrChinaName(near_strname);
+            string near_fsk_cnname = Item_Info.Get_StrChinaName(near_strname);
             double fsk_distance = Math.Round(near_strchainage - first_chainage, 0);
             string fsk_string1 = (near_fsk_cnname == null || fsk_distance < 0) ? "" : near_fsk_cnname + " " + fsk_distance + "m";
             string fsk_string2 = (wrw_speed != 0.0 && fsk_distance > 0) ? Math.Round((fsk_distance / wrw_speed) / 3600, 1).ToString() : "";

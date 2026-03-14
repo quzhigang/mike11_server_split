@@ -39,7 +39,7 @@ namespace bjd_model.Mike11
             Dictionary<string, Reservoir_FloodRes> res_floodres = new Dictionary<string, Reservoir_FloodRes>();
 
             //获取所有水库信息
-            List<Reservoir> res_info = WG_INFO.Get_ResInfo(model_instance);
+            List<Reservoir> res_info = Item_Info.Get_ResInfo(model_instance);
 
             //从数据库获取一维模型水库的初始水情条件
             Dictionary<string, double> res_initial_levels = Hd11.Get_Res_InitialLevel(hydromodel.Modelname);
@@ -83,7 +83,7 @@ namespace bjd_model.Mike11
             double max_Volumn = volumn_Dic.Values.Max();
 
             //出库流量过程
-            Dictionary<string, AtReach[]> res_outatreach = WG_INFO.GetRes_OutQAtreach(Mysql_GlobalVar.now_instance);
+            Dictionary<string, AtReach[]> res_outatreach = Item_Info.GetRes_OutQAtreach(Mysql_GlobalVar.now_instance);
             AtReach[] this_resout = res_outatreach[res.Name];
             Dictionary<DateTime, double> yHDOutQ_Dic = Res11.Res11reader(hydromodel.Modelname, this_resout[0], mike11_restype.Discharge, resdata);
             if (yHDOutQ_Dic != null) Remove_Ahead_Res(hydromodel, ref yHDOutQ_Dic);
@@ -98,7 +98,7 @@ namespace bjd_model.Mike11
             DateTime maxoutq_Time = outQ_Dic.OrderByDescending(entry => entry.Value).First().Key;
 
             //入库流量过程
-            Dictionary<string, Res_InSection_BndID> res_inflows = WG_INFO.Get_ResInFlow_SectionBndID(Mysql_GlobalVar.now_instance);
+            Dictionary<string, Res_InSection_BndID> res_inflows = Item_Info.Get_ResInFlow_SectionBndID(Mysql_GlobalVar.now_instance);
             Res_InSection_BndID res_inflow = res_inflows[res.Name];
             Dictionary<DateTime, double> inQ_Dic = Calculate_ResInflow(hydromodel, res, res_inflow);
             if (inQ_Dic != null) Remove_Ahead_Res(hydromodel, ref inQ_Dic);
@@ -190,7 +190,7 @@ namespace bjd_model.Mike11
             double distance = 0;
 
             //水库大坝桩号
-            Dictionary<string, List<AtReach>> res_atreachs = WG_INFO.GetRes_ControlInitialAtreach();
+            Dictionary<string, List<AtReach>> res_atreachs = Item_Info.GetRes_ControlInitialAtreach();
             List<AtReach> res_control_initialatreach = res_atreachs[res.Name];
             List<AtReach> main_reachs = new List<AtReach>();
             for (int i = 0; i < res_control_initialatreach.Count; i++)
@@ -264,7 +264,7 @@ namespace bjd_model.Mike11
             double bnd_chainage = end_chainage == 0 ? start_chainage : (start_chainage + end_chainage) * 0.5;
 
             //水库大坝桩号
-            Dictionary<string, List<AtReach>> res_atreachs = WG_INFO.GetRes_ControlInitialAtreach();
+            Dictionary<string, List<AtReach>> res_atreachs = Item_Info.GetRes_ControlInitialAtreach();
             List<AtReach> res_control_initialatreach = res_atreachs[res.Name];
             List<AtReach> main_reachs = new List<AtReach>();
             for (int i = 0; i < res_control_initialatreach.Count; i++)

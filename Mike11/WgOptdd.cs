@@ -93,7 +93,7 @@ namespace bjd_model.Mike11
         public static void Get_OptimizeDd_CalResult(HydroModel hydromodel)
         {
             //从数据库获取优化调度目标、约束等参数
-            string target_info = WG_INFO.Get_Model_SingleParInfo(hydromodel.Modelname, "mike11_dispatch_target_info");
+            string target_info = Item_Info.Get_Model_SingleParInfo(hydromodel.Modelname, "mike11_dispatch_target_info");
             if (target_info == null || target_info == "") return;
             JArray jar = JArray.Parse(target_info);
             Dispatch_Target dd_target = JsonConvert.DeserializeObject<Dispatch_Target>(jar[1].ToString());
@@ -102,7 +102,7 @@ namespace bjd_model.Mike11
             //更新数据库里的模型状态信息和模型实体
             hydromodel.Model_state = Model_State.Iscalting;
             string start_simulate_time = DateTime.Now.ToString(Model_Const.TIMEFORMAT);
-            string[] model_info = WG_INFO.Get_Model_Info(hydromodel, start_simulate_time, true);
+            string[] model_info = Item_Info.Get_Model_Info(hydromodel, start_simulate_time, true);
             HydroModel.Update_ModelStateInfo(hydromodel, model_info, false);
             Model_Const.Now_Model_State = Model_State.Iscalting;
 
@@ -157,7 +157,7 @@ namespace bjd_model.Mike11
             {
                 hydromodel.Model_state = hydromodel.GetProgress().now_progress_value == 100 ? Model_State.Finished : Model_State.Error;
             }
-            model_info = WG_INFO.Get_Model_Info(hydromodel, start_simulate_time, false);
+            model_info = Item_Info.Get_Model_Info(hydromodel, start_simulate_time, false);
             HydroModel.Update_ModelStateInfo(hydromodel, model_info[4], true);
             Model_Const.Now_Model_State = Model_State.Finished;
         }
@@ -427,7 +427,7 @@ namespace bjd_model.Mike11
         //获取所有闸门的调度信息，并替换调水库的
         private static Dictionary<string, List<DdInfo>> Get_AllStr_Ddinfo(HydroModel hydromodel, Dictionary<string, List<DdInfo>> res_optiddinfo)
         {
-            List<Str_DdInfo> gatedd_info = WG_INFO.Get_ModelGatedd_Info(hydromodel);
+            List<Str_DdInfo> gatedd_info = Item_Info.Get_ModelGatedd_Info(hydromodel);
             Dictionary<string, List<DdInfo>> all_strdd = new Dictionary<string, List<DdInfo>>();
             for (int i = 0; i < gatedd_info.Count; i++)
             {
@@ -456,7 +456,7 @@ namespace bjd_model.Mike11
         {
             //所有分洪闸堰可控建筑物集合
             List<string> fhz_fhy = new List<string>();
-            Dictionary<string, Struct_BasePars> str_infos = WG_INFO.Get_StrBaseInfo();
+            Dictionary<string, Struct_BasePars> str_infos = Item_Info.Get_StrBaseInfo();
             for (int i = 0; i < all_str_ddinfo.Count; i++)
             {
                 string str_name = all_str_ddinfo.ElementAt(i).Key;
@@ -509,7 +509,7 @@ namespace bjd_model.Mike11
             bool target_isfinish = false;
 
             //修改模型闸站调度
-            WG_INFO.Update_AllStr_DdInfo(ref hydromodel, optimize_ddinfo);
+            Item_Info.Update_AllStr_DdInfo(ref hydromodel, optimize_ddinfo);
 
             //开始同步快速模拟
             hydromodel.Quick_Simulate();

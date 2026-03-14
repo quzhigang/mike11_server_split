@@ -998,7 +998,7 @@ namespace bjd_model
 
             //更新数据库里的模型状态信息和模型实体
             this.Model_state = Model_State.Iscalting;
-            string[] model_info = WG_INFO.Get_Model_Info(this, start_simulate_time, true);
+            string[] model_info = Item_Info.Get_Model_Info(this, start_simulate_time, true);
             Update_ModelStateInfo(this, model_info, true);
             Model_Const.Now_Model_State = Model_State.Iscalting;
 
@@ -1057,8 +1057,8 @@ namespace bjd_model
 
             //获取模型实例
             string model_instance = HydroModel.Get_Model_Instance(this.Modelname);
-            if (this.Mike11Pars.SectionList == null) this.Mike11Pars.SectionList = WG_INFO.Get_Item_SectionDatas(model_instance);
-            if (this.Mike11Pars.SectionList.ReachSectionList == null) this.Mike11Pars.SectionList = WG_INFO.Get_Item_SectionDatas(model_instance);
+            if (this.Mike11Pars.SectionList == null) this.Mike11Pars.SectionList = Item_Info.Get_Item_SectionDatas(model_instance);
+            if (this.Mike11Pars.SectionList.ReachSectionList == null) this.Mike11Pars.SectionList = Item_Info.Get_Item_SectionDatas(model_instance);
 
             //计算完成后，获取一维模型结果
             List<object> mike11_datares = Get_Mike11_AllResult(model_instance, is_quick);
@@ -1070,7 +1070,7 @@ namespace bjd_model
             if(!is_quick) Res11.Write_GCGisLine_TJGisLine_toDB(this, mike11_datares, model_instance);
 
             //更新模型信息到数据库
-            model_info = WG_INFO.Get_Model_Info(this, start_simulate_time, false);
+            model_info = Item_Info.Get_Model_Info(this, start_simulate_time, false);
             Update_ModelStateInfo(this, model_info[4], true);
 
             //如果是快速模拟，则到此结束
@@ -1215,7 +1215,7 @@ namespace bjd_model
         private static Dictionary<string, object> Get_Modify_InitialLevel_RequestPars(HydroModel model, List<string> instance_list)
         {
             //从数据库获取一维模型的初始水情条件
-            string intial_water = WG_INFO.Get_Model_SingleParInfo(model.Modelname, "mike11_initial_info"); 
+            string intial_water = Item_Info.Get_Model_SingleParInfo(model.Modelname, "mike11_initial_info"); 
             if (intial_water == null || intial_water == "") return null;
             Dictionary<string, List<List<object>>> intial_water_obj = JsonConvert.DeserializeObject<Dictionary<string, List<List<object>>>>(intial_water);
 
@@ -1405,7 +1405,7 @@ namespace bjd_model
             //向模型参数数据库中插入新的模型信息
             DateTime start_time = model.ModelGlobalPars.Simulate_time.Begin.AddHours(model.ModelGlobalPars.Ahead_hours);
             double time_hours = model.ModelGlobalPars.Simulate_time.End.Subtract(model.ModelGlobalPars.Simulate_time.Begin).TotalHours;
-            int expect_seconds = (int)WG_INFO.Get_ModelRun_ElispedTime(time_hours);
+            int expect_seconds = (int)Item_Info.Get_ModelRun_ElispedTime(time_hours);
             int step_save_minutes = (int)model.Mike11Pars.Mike11_savetimestep;
 
             //获取模型状态
@@ -1474,10 +1474,10 @@ namespace bjd_model
             else   //插入新的记录
             {
                 //将模型对象、调度信息 存入数据库
-                string dd_info = WG_INFO.Get_Model_DdInfo(model);
+                string dd_info = Item_Info.Get_Model_DdInfo(model);
 
                 //从模型中获取初始水情信息
-                string initial_info = WG_INFO.Get_Model_InitialInfo(model);
+                string initial_info = Item_Info.Get_Model_InitialInfo(model);
 
                 //向模型参数数据库中插入新的模型信息
                 Inser_ModelInfo(model, model_instance, tableName, dd_info, initial_info);
@@ -1873,7 +1873,7 @@ namespace bjd_model
             if (model.ModelGlobalPars.Select_model.ToString().Contains("hd") && 
                 model.Mike11Pars.SectionList == null && plan_code != Model_Const.DEFAULT_MODELNAME)
             {
-                SectionList nowitem_sectiondata = WG_INFO.Get_Item_SectionDatas(Mysql_GlobalVar.now_instance);
+                SectionList nowitem_sectiondata = Item_Info.Get_Item_SectionDatas(Mysql_GlobalVar.now_instance);
                 model.Mike11Pars.SectionList = nowitem_sectiondata;
             }
 
@@ -2016,7 +2016,7 @@ namespace bjd_model
             DateTime s_simulate_time = SimulateTime.StrToTime(start_simulate_time);
 
             double time_hours = e_time.Subtract(s_time).TotalHours;
-            double total_second = WG_INFO.Get_ModelRun_ElispedTime(time_hours);
+            double total_second = Item_Info.Get_ModelRun_ElispedTime(time_hours);
             double remain_second = Math.Max(total_second - Math.Round(DateTime.Now.Subtract(s_simulate_time).TotalSeconds), 0);
 
             return Progress_Time.Get_Progress_Time(total_second, remain_second);
@@ -2413,8 +2413,8 @@ namespace bjd_model
                     if (new_ddzl_str == "")
                     {
                         ddinfo[j][2] = "规则调度";
-                        GateType str_type = WG_INFO.Get_Gate_Type(ddinfo[j][1]);
-                        ddinfo[j][3] = WG_INFO.Get_Gate_Rule(str_type);
+                        GateType str_type = Item_Info.Get_Gate_Type(ddinfo[j][1]);
+                        ddinfo[j][3] = Item_Info.Get_Gate_Rule(str_type);
 
                     }
                 }
@@ -2432,7 +2432,7 @@ namespace bjd_model
                 List<string[]> ddinfo = Model_Ddinfo.ElementAt(i).Value;
                 for (int j = 0; j < ddinfo.Count; j++)
                 {
-                    if (WG_INFO.Get_StrChinaName(strname) == ddinfo[j][1])
+                    if (Item_Info.Get_StrChinaName(strname) == ddinfo[j][1])
                     {
                         str_ddinfo = ddinfo[j];
 
@@ -2448,7 +2448,7 @@ namespace bjd_model
                         else
                         {
                             info2 = "规则调度";
-                            info3 = WG_INFO.Get_Gate_Rule(WG_INFO.Get_Gate_Type(strname));
+                            info3 = Item_Info.Get_Gate_Rule(Item_Info.Get_Gate_Type(strname));
                         }
                         ddinfo[j][2] = info2;
                         ddinfo[j][3] = info3;
@@ -2530,8 +2530,8 @@ namespace bjd_model
             string fangan_desc = start_timestr + "开始的自动预报，预报时长72小时";
 
             //1、更新水情和工情数据库
-            WG_INFO.Update_LevelTable();
-            WG_INFO.Update_GateStateTable();
+            Item_Info.Update_LevelTable();
+            Item_Info.Update_GateStateTable();
 
             //2、新建模型、修改初始条件、闸站调度和边界条件  --只保存模型实体
             HydroModel hydro_model = HydroModel.Create_Model(fangan_name, start_timestr, end_timestr, fangan_desc,Model_Const.DEFAULT_MODELNAME,plan_code,60);
@@ -2609,31 +2609,31 @@ namespace bjd_model
         //获取 指定模型 的闸门调度信息(从数据库)
         public static string Get_ModelGatedd_Info(string plan_code)
         {
-            return WG_INFO.Get_Model_SingleParInfo(plan_code, "mike11_strdd_info");
+            return Item_Info.Get_Model_SingleParInfo(plan_code, "mike11_strdd_info");
         }
 
         //获取主要控制闸门的简短调度指令
         public static string Get_Model_DispatchPlan(string plan_code)
         {
-            return WG_INFO.Get_Model_DispatchPlan_Fromdb(plan_code);
+            return Item_Info.Get_Model_DispatchPlan_Fromdb(plan_code);
         }
 
         //获取 指定模型 的初始条件信息(从数据库)
         public static string Get_Model_InitialLevel(string plan_code)
         {
-            return WG_INFO.Get_Model_SingleParInfo(plan_code, "mike11_initial_info");
+            return Item_Info.Get_Model_SingleParInfo(plan_code, "mike11_initial_info");
         }
 
         //获取 指定模型 的边界条件信息(从数据库)
         public static string Get_Model_BndInfo(string plan_code)
         {
-            return WG_INFO.Get_Model_SingleParInfo(plan_code, "mike11_bnd_info");
+            return Item_Info.Get_Model_SingleParInfo(plan_code, "mike11_bnd_info");
         }
 
         //获取 指定模型 优化调度设置信息(从数据库)
         public static string Get_Model_DispatchTarget(string plan_code)
         {
-            return WG_INFO.Get_Model_SingleParInfo(plan_code, "mike11_dispatch_target_info");
+            return Item_Info.Get_Model_SingleParInfo(plan_code, "mike11_dispatch_target_info");
         }
 
         //根据方案id获取已经集成的一维模型实例名称(有文件夹，基于一个业务模型只包含一个同类型模型实例)
@@ -2920,7 +2920,7 @@ namespace bjd_model
 
             //返回模拟所需要的时间(秒)
             double time_hours = hydromodel.ModelGlobalPars.Simulate_time.End.Subtract(hydromodel.ModelGlobalPars.Simulate_time.Begin).TotalHours;
-            double elisp_time = WG_INFO.Get_ModelRun_ElispedTime(time_hours);
+            double elisp_time = Item_Info.Get_ModelRun_ElispedTime(time_hours);
 
             //等待模型状态改变后才返回(最多20秒)
             int n = 0;
@@ -2964,7 +2964,7 @@ namespace bjd_model
 
             //返回模拟所需要的时间(秒)
             double time_hours = this.ModelGlobalPars.Simulate_time.End.Subtract(this.ModelGlobalPars.Simulate_time.Begin).TotalHours;
-            double elisp_time = WG_INFO.Get_ModelRun_ElispedTime(time_hours) * 3;
+            double elisp_time = Item_Info.Get_ModelRun_ElispedTime(time_hours) * 3;
 
             //等待模型状态改变后才返回(最多20秒)
             int n = 0;
@@ -3029,8 +3029,8 @@ namespace bjd_model
 
             //获取模型实例
             string model_instance = HydroModel.Get_Model_Instance(this.Modelname);
-            if (this.Mike11Pars.SectionList == null) this.Mike11Pars.SectionList = WG_INFO.Get_Item_SectionDatas(model_instance);
-            if (this.Mike11Pars.SectionList.ReachSectionList == null) this.Mike11Pars.SectionList = WG_INFO.Get_Item_SectionDatas(model_instance);
+            if (this.Mike11Pars.SectionList == null) this.Mike11Pars.SectionList = Item_Info.Get_Item_SectionDatas(model_instance);
+            if (this.Mike11Pars.SectionList.ReachSectionList == null) this.Mike11Pars.SectionList = Item_Info.Get_Item_SectionDatas(model_instance);
 
             //计算完成后，获取水库和河道断面结果
             this.ModelGlobalPars.Ahead_hours = 0;
@@ -3088,7 +3088,7 @@ namespace bjd_model
 
             //更新数据库里的模型状态为待计算
             this.Model_state = Model_State.Ready_Calting;
-            string[] model_info = WG_INFO.Get_Model_Info(this, "", true);
+            string[] model_info = Item_Info.Get_Model_Info(this, "", true);
             Update_ModelStateInfo(this, model_info[4]);
         }
 
@@ -3465,7 +3465,7 @@ namespace bjd_model
         public void Update_AllStr_DdInfo_FromGB()
         {
             HydroModel hydromodel = this;
-            WG_INFO.Update_AllStr_DdInfo_FromGB(ref hydromodel);
+            Item_Info.Update_AllStr_DdInfo_FromGB(ref hydromodel);
 
             this.Model_state = Model_State.Ready_Calting;
 
@@ -3473,7 +3473,7 @@ namespace bjd_model
             this.Save();
 
             //更新模型状态为待计算  --不再保存模型实体
-            string[] model_info = WG_INFO.Get_Model_Info(this, "", false);
+            string[] model_info = Item_Info.Get_Model_Info(this, "", false);
             Update_ModelStateInfo(this, model_info[4],false);
 
             //单独更新闸站状态信息
@@ -3484,7 +3484,7 @@ namespace bjd_model
         public void Update_AllStr_DdInfo(Dictionary<string, List<DdInfo>> new_ddinfos)
         {
             HydroModel hydromodel = this;
-            WG_INFO.Update_AllStr_DdInfo(ref hydromodel, new_ddinfos);
+            Item_Info.Update_AllStr_DdInfo(ref hydromodel, new_ddinfos);
 
             this.Model_state = Model_State.Ready_Calting;
 
@@ -3492,7 +3492,7 @@ namespace bjd_model
             this.Save();
 
             //更新模型状态信息为待计算
-            string[] model_info = WG_INFO.Get_Model_Info(this, "", false);
+            string[] model_info = Item_Info.Get_Model_Info(this, "", false);
 
             //更新模型状态为待计算 --不再保存模型实体
             Update_ModelStateInfo(this, model_info[4],false);
@@ -3539,14 +3539,14 @@ namespace bjd_model
         public void Update_Str_DdInfo(string[] new_ddinfo)
         {
             HydroModel hydromodel = this;
-            WG_INFO.Update_Str_DdInfo(ref hydromodel, new_ddinfo);
+            Item_Info.Update_Str_DdInfo(ref hydromodel, new_ddinfo);
 
             //重新保存模型
             this.Save();
 
             //更新模型状态信息为待计算
             this.Model_state = Model_State.Ready_Calting;
-            string[] model_info = WG_INFO.Get_Model_Info(this, "", false);
+            string[] model_info = Item_Info.Get_Model_Info(this, "", false);
             Update_ModelStateInfo(this, model_info[4]);
         }
 
@@ -3654,7 +3654,7 @@ namespace bjd_model
             //通过网络请求降雨过程
             string request_rain_url = Mysql_GlobalVar.catchmentrain_serverurl; 
             request_rain_url += "?planCode=" + hydromodel.Modelname;
-            Dictionary<string, Dictionary<DateTime, double>> catchment_rain = WG_INFO.Get_Catchment_RainGC_FromHttpRequest(request_rain_url);
+            Dictionary<string, Dictionary<DateTime, double>> catchment_rain = Item_Info.Get_Catchment_RainGC_FromHttpRequest(request_rain_url);
             
             //请求产汇流模型计算 网络地址
             string request_flood_url = Mysql_GlobalVar.nam_serverurl;
@@ -3675,7 +3675,7 @@ namespace bjd_model
             string allrequest_pars_str = File_Common.Serializer_Obj(allrequest_pars);
 
             //请求产汇流模型计算所有子流域洪水过程
-            Dictionary<string, Dictionary<DateTime, double>> catchment_q = WG_INFO.Get_Catchment_FloodGC_FromHttpRequest(hydromodel, request_flood_url, allrequest_pars_str);
+            Dictionary<string, Dictionary<DateTime, double>> catchment_q = Item_Info.Get_Catchment_FloodGC_FromHttpRequest(hydromodel, request_flood_url, allrequest_pars_str);
             Bnd11.Modify_Bnds_ToDischargeDic(ref hydromodel, catchment_q);
             return catchment_q;
         }
@@ -3693,7 +3693,7 @@ namespace bjd_model
             request_url += "?planCode=" + plan_code;
 
             //请求产汇流模型计算所有子流域洪水过程
-            Dictionary<string, Dictionary<DateTime, double>> catchment_q = WG_INFO.Get_CatchmentQ_FromHttpRequest(hydromodel, request_url);
+            Dictionary<string, Dictionary<DateTime, double>> catchment_q = Item_Info.Get_CatchmentQ_FromHttpRequest(hydromodel, request_url);
             Bnd11.Modify_Bnds_ToDischargeDic(ref hydromodel, catchment_q);
             return catchment_q;
         }
@@ -3821,7 +3821,7 @@ namespace bjd_model
                 this.Update_InitialWaterlevel();
 
                 //通过一定算法，获得几个主要河道额外基流流量(也可能是负值，表示取水)
-                Dictionary<string, double> base_in_q = WG_INFO.Get_MainReach_Base_Discharge();
+                Dictionary<string, double> base_in_q = Item_Info.Get_MainReach_Base_Discharge();
 
                 //修改河道与初始水位对应的边界条件基流流量
                 if (base_in_q == null) return;
@@ -3850,10 +3850,10 @@ namespace bjd_model
         public void Update_Base_Discharge()
         {
             //获取主要河道额外 基流流量
-            Dictionary<string, double> base_in_q = WG_INFO.Get_MainReach_Base_Discharge();
+            Dictionary<string, double> base_in_q = Item_Info.Get_MainReach_Base_Discharge();
 
             //修改河道与初始水位对应的边界条件基流流量
-            if (WG_INFO.Reach_NowDischarge != null)
+            if (Item_Info.Reach_NowDischarge != null)
             {
                 for (int i = 0; i < base_in_q.Count; i++)
                 {
@@ -4205,7 +4205,7 @@ namespace bjd_model
             List<double[]> sectiondata2 = sectiondata1.OrderBy(arr => arr[0]).ToList();
 
             //获取河道中文名
-            string reach_cnname = WG_INFO.Get_ReachChinaName(atreach.reachname);
+            string reach_cnname = Item_Info.Get_ReachChinaName(atreach.reachname);
             double chainage = atreach.chainage;
 
             res.Add("reach_name", reach_cnname);
@@ -4809,7 +4809,7 @@ namespace bjd_model
                 string reach_name = level_max.ElementAt(i).Key;
                 List<float> reach_level_max = level_max.ElementAt(i).Value;
                 List<float> reach_dd_level = Zdmdd_Data.ElementAt(i).Value;
-                string reach_cnname = WG_INFO.Get_ReachChinaName(reach_name);
+                string reach_cnname = Item_Info.Get_ReachChinaName(reach_name);
                 if (reach_cnname.Contains("连接河") || reach_cnname.Contains("分洪堰") || reach_cnname.Contains("泄洪洞") || reach_cnname.Contains("溢洪") || reach_cnname.Contains("保留区")) continue;
                 for (int j = 0; j < reach_level_max.Count; j++)
                 {
@@ -4840,7 +4840,7 @@ namespace bjd_model
         public static string Get_Res_ResultDesc(Dictionary<string, Reservoir_FloodRes> res_result)
         {
             //各水库的坝顶高程
-            Dictionary<string, Dictionary<double, double>> res_qhrelation = WG_INFO.Get_ResHVrelation();
+            Dictionary<string, Dictionary<double, double>> res_qhrelation = Item_Info.Get_ResHVrelation();
             Dictionary<string, double> res_damlevel = new Dictionary<string, double>();
             for (int i = 0; i < res_qhrelation.Count; i++)
             {

@@ -37,7 +37,7 @@ namespace bjd_model.Mike11
         public static Dictionary<string, Dictionary<string, Dictionary<DateTime, double>>> Get_AllGate_Discharge(HydroModel hydromodel)
         {
             Dictionary<string, Dictionary<string, Dictionary<DateTime, double>>> gate_discharges = new Dictionary<string, Dictionary<string, Dictionary<DateTime, double>>>();
-            List<ReachInfo> main_reach = WG_INFO.Get_MainReachInfo(Mysql_GlobalVar.now_instance);
+            List<ReachInfo> main_reach = Item_Info.Get_MainReachInfo(Mysql_GlobalVar.now_instance);
             List<DateTime> time_list = new List<DateTime>();
 
             //遍历各主河道
@@ -128,7 +128,7 @@ namespace bjd_model.Mike11
             Dictionary<string, Dictionary<DateTime, double>> gate_dischargedic = new Dictionary<string, Dictionary<DateTime, double>>();
 
             //获取闸门数量
-            Dictionary<string, AtReach> gate_dic = WG_INFO.Get_TypeGate_FromStrBaseInfo(hydromodel, gate_type);
+            Dictionary<string, AtReach> gate_dic = Item_Info.Get_TypeGate_FromStrBaseInfo(hydromodel, gate_type);
 
             //如果是分水闸、泵站
             if (gate_type == GateType.LLZ || gate_type == GateType.BZ)

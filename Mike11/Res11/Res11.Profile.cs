@@ -39,7 +39,7 @@ namespace bjd_model.Mike11
             mike11_restype item_type, ResultData resdata, string model_instance)
         {
             //查询河道列表
-            List<ReachInfo> main_reach = WG_INFO.Get_MainReachInfo(model_instance);
+            List<ReachInfo> main_reach = Item_Info.Get_MainReachInfo(model_instance);
             Dictionary<string, Dictionary<DateTime, Dictionary<double, double>>> allreach_grid_zdmdata = new Dictionary<string, Dictionary<DateTime, Dictionary<double, double>>>();
 
             //获取结果时间数组

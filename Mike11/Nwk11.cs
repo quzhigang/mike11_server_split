@@ -309,7 +309,7 @@ namespace bjd_model.Mike11
             else  // 若是流量类型闸门，从数据库获取闸门基本属性，并采用闸门类型
             {
                 //从获取该闸门属性
-                Struct_BasePars gate_str = WG_INFO.Get_StrBaseInfo(strname);
+                Struct_BasePars gate_str = Item_Info.Get_StrBaseInfo(strname);
                 if(gate_str.gate_type == GateType.BZ || gate_str.gate_type == GateType.LLZ)
                 {
                     stratts.gate_type = 2;

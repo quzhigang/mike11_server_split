@@ -362,7 +362,7 @@ namespace bjd_model.Mike11
         public static List<Dictionary<string, object>> Get_Mountain_Forecast_Flood(string plan_code)
         {
             List<Dictionary<string, object>> sh_res = new List<Dictionary<string, object>>();
-            List<SH_INFO> sh_info = WG_INFO.Get_Mountain_Flood_BaseInfo();
+            List<SH_INFO> sh_info = Item_Info.Get_Mountain_Flood_BaseInfo();
 
             //获取山洪涉及的子流域
             List<string> sub_catchment = new List<string>();
@@ -389,7 +389,7 @@ namespace bjd_model.Mike11
             //请求子流域累计降雨
             string request_rain_url = Mysql_GlobalVar.catchmentrain_serverurl;
             request_rain_url += "?planCode=" + plan_code;
-            Dictionary<string, Dictionary<DateTime, double>> catchment_rain = WG_INFO.Get_Catchment_RainGC_FromHttpRequest(request_rain_url);
+            Dictionary<string, Dictionary<DateTime, double>> catchment_rain = Item_Info.Get_Catchment_RainGC_FromHttpRequest(request_rain_url);
             Dictionary<string, double> sub_catchment_rain = new Dictionary<string, double>();
             for (int i = 0; i < sub_catchment.Count; i++)
             {
@@ -455,7 +455,7 @@ namespace bjd_model.Mike11
 
             //子蓄滞洪区启用结果和 需要特殊处理的三维面要素 **卫共独有**
             Dictionary<DateTime, Dictionary<string, string>> sub_xzhq_res = mike11_datares.Last() as Dictionary<DateTime, Dictionary<string, string>>;
-            Dictionary<int, string> tx_polygonlist = WG_INFO.Get_Mike11_TxPolygonFeatures();
+            Dictionary<int, string> tx_polygonlist = Item_Info.Get_Mike11_TxPolygonFeatures();
 
             //直接从样本表里读取河道样本三维面
             string field_name = "polygon_sample_result";
@@ -515,7 +515,7 @@ namespace bjd_model.Mike11
             //子蓄滞洪区启用结果和 需要特殊处理的三维面要素 **卫共独有**
             Dictionary<DateTime, Dictionary<string, string>> sub_xzhq_alltime_res = mike11_datares.Last() as Dictionary<DateTime, Dictionary<string, string>>;
             Dictionary<string, string> sub_xzhq_res = Xzhq_FloodRes.Get_Xzhq_State(sub_xzhq_alltime_res);
-            Dictionary<int, string> tx_polygonlist = WG_INFO.Get_Mike11_TxPolygonFeatures();
+            Dictionary<int, string> tx_polygonlist = Item_Info.Get_Mike11_TxPolygonFeatures();
 
             //直接从样本表里读取河道样本三维面
             string field_name = "polygon_sample_result";
@@ -762,7 +762,7 @@ namespace bjd_model.Mike11
             Dictionary<string, List<float>> speed_max = Get_ZdRes_TimeMaxValue(speed_zd);
 
             //获取各断面的不冲流速
-            Dictionary<string, List<float>> reach_bc = WG_INFO.Get_Reach_NoDestorySpeed(reach_section_chainage);
+            Dictionary<string, List<float>> reach_bc = Item_Info.Get_Reach_NoDestorySpeed(reach_section_chainage);
 
             //将各河道的断面属性合并
             List<float> level = Combine_ReachSection_ZdPars(level_max);

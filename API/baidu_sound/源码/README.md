@@ -1,4 +1,4 @@
-# 百度AI开放平台 .Net SDK
+﻿# 百度AI开放平台 .Net SDK
 
 **支持平台：.Net Framework 3.5/4.0/4.5 , Core 2.0**
 

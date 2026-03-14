@@ -396,7 +396,7 @@ namespace bjd_model
             Mysql_GlobalVar.now_instance = model_instance;
 
             //更新水情和工情数据库
-            WG_INFO.Update_LevelTable();
+            Item_Info.Update_LevelTable();
             //HH_INFO.Update_GateStateTable();
 
             //新建模型(请求一次)
@@ -404,7 +404,7 @@ namespace bjd_model
 
             //将集合序列化为json格式的字符串
             double time_hours = model.ModelGlobalPars.Simulate_time.End.Subtract(model.ModelGlobalPars.Simulate_time.Begin).TotalHours;
-            int expect_seconds = (int)WG_INFO.Get_ModelRun_ElispedTime(time_hours);
+            int expect_seconds = (int)Item_Info.Get_ModelRun_ElispedTime(time_hours);
 
             //返回信息
             JObject obj1 = new JObject();
@@ -570,7 +570,7 @@ namespace bjd_model
             Mysql_GlobalVar.now_instance = model_instance;
 
             //更新水情和工情数据库
-            WG_INFO.Update_LevelTable();
+            Item_Info.Update_LevelTable();
 
             //修改初始条件
             HydroModel hydromodel = HydroModel.Load(plan_code);
@@ -691,7 +691,7 @@ namespace bjd_model
             if (jar[1].ToString() == "monitor")  //全部采用闸站现状状态调度
             {
                 //更新工情数据库
-                WG_INFO.Update_GateStateTable();
+                Item_Info.Update_GateStateTable();
 
                 //根据数据库最新监测闸站调度，修改闸门调度(保存过模型，更新过模型状态)
                 hydromodel.Update_AllStr_DdInfo_FromGB();
@@ -705,7 +705,7 @@ namespace bjd_model
 
                 //更新模型状态信息为待计算
                 hydromodel.Model_state = Model_State.Ready_Calting;
-                string[] model_info = WG_INFO.Get_Model_Info(hydromodel, "", false);
+                string[] model_info = Item_Info.Get_Model_Info(hydromodel, "", false);
                 HydroModel.Update_ModelStateInfo(hydromodel, model_info[4]);
 
                 //单独更新闸站状态信息
@@ -720,7 +720,7 @@ namespace bjd_model
                     //每个建筑物(英文名)1个或多个调度指令，每个调度指令包括4个参数 时间、调度方式(中文)、开闸数、调度量，时间为""表示全过程保持
                     string str_id = dd_array[i][0].ToString();
                     List<DdInfo> str_dds = new List<DdInfo>();
-                    Struct_BasePars str_pars = WG_INFO.Get_StrBaseInfo(str_id);
+                    Struct_BasePars str_pars = Item_Info.Get_StrBaseInfo(str_id);
 
                     for (int j = 1; j < dd_array[i].Count(); j++)
                     {
@@ -988,8 +988,8 @@ namespace bjd_model
             HydroModel hydromodel = HydroModel.Load(plan_code);
 
             //先设置调度方式为当前监测
-            WG_INFO.Update_GateStateTable();
-            WG_INFO.Update_AllStr_DdInfo_FromGB(ref hydromodel);
+            Item_Info.Update_GateStateTable();
+            Item_Info.Update_AllStr_DdInfo_FromGB(ref hydromodel);
 
             //单独更改该闸门调度
             Dictionary<string, List<DdInfo>> dd_info = new Dictionary<string, List<DdInfo>>();
@@ -1406,7 +1406,7 @@ namespace bjd_model
         public string Get_Main_ReachInfo(string model_instance)
         {
             //获取模型结果
-            List<Reach_BasePars> reach_info = WG_INFO.Get_MainReach_Info(model_instance);
+            List<Reach_BasePars> reach_info = Item_Info.Get_MainReach_Info(model_instance);
 
             //将集合序列化为json格式的字符串
             string _data = File_Common.Serializer_Obj(reach_info);
@@ -1428,7 +1428,7 @@ namespace bjd_model
             Dictionary<string, object> reach_section_infos = new Dictionary<string, object>();
 
             //获取河道基础信息
-            Dictionary<string, Reach_BasePars> reach_info = WG_INFO.Get_MainReach_Infodic(model_instance);
+            Dictionary<string, Reach_BasePars> reach_info = Item_Info.Get_MainReach_Infodic(model_instance);
 
             //获取模型结果
             Dictionary<string, List<float>> reach_sections = HydroModel.Get_ReachSections(plan_code);
@@ -1668,7 +1668,7 @@ namespace bjd_model
             if (plan_code == "" || plan_code == null) return Get_SuccessObj();
 
             //根据模型方案id和业务模型类型获取需要统计流量的特征断面(用于分洪、溃堤、闸站故障流量统计)
-            AtReach atreach = WG_INFO.Get_ReachSection_From_PlanCode(plan_code);
+            AtReach atreach = Item_Info.Get_ReachSection_From_PlanCode(plan_code);
 
             //序列化
             string _data = File_Common.Serializer_Obj(atreach);
@@ -1692,10 +1692,10 @@ namespace bjd_model
         public string Get_Str_DdRuleInfo(string business_code)
         {
             //获取闸门基本信息，其中包括规则调度信息
-            if (WG_INFO.Str_BaseInfo == null) WG_INFO.Initial_StrBaseInfo();
+            if (Item_Info.Str_BaseInfo == null) Item_Info.Initial_StrBaseInfo();
 
             //根据业务模型获取模型实例(参数为空字符串，则为全部，否则为指定业务模型的建筑物)
-            Dictionary<string, Struct_BasePars> str_info = business_code == ""? WG_INFO.Str_BaseInfo:WG_INFO.Get_StrBaseInfo_ByModelBusiness(business_code);
+            Dictionary<string, Struct_BasePars> str_info = business_code == ""? Item_Info.Str_BaseInfo:Item_Info.Get_StrBaseInfo_ByModelBusiness(business_code);
 
             //刷选一下没有闸门的
             Dictionary<string, Struct_BasePars> controstr_info = new Dictionary<string, Struct_BasePars>();
@@ -1723,10 +1723,10 @@ namespace bjd_model
             string obj_stcd = jar[1].ToString();
 
             //获取闸门基本信息，其中包括规则调度信息
-            if (WG_INFO.Str_BaseInfo == null) WG_INFO.Initial_StrBaseInfo();
+            if (Item_Info.Str_BaseInfo == null) Item_Info.Initial_StrBaseInfo();
 
             //根据业务模型获取模型实例(参数为空字符串，则为全部，否则为指定业务模型的建筑物)
-            Dictionary<string, Struct_BasePars> str_info = business_code == "" ? WG_INFO.Str_BaseInfo : WG_INFO.Get_StrBaseInfo_ByModelBusiness(business_code);
+            Dictionary<string, Struct_BasePars> str_info = business_code == "" ? Item_Info.Str_BaseInfo : Item_Info.Get_StrBaseInfo_ByModelBusiness(business_code);
 
             //刷选一下没有闸门的
             Dictionary<string, Struct_BasePars> controstr_info = new Dictionary<string, Struct_BasePars>();
@@ -1760,7 +1760,7 @@ namespace bjd_model
         public string Get_GateState(string business_code)
         {
             //从数据库获取当前闸门状态
-            List<Gate_StateInfo> gate_state =(business_code == "" || business_code == "undefined")? WG_INFO.Read_NowGateState(): WG_INFO.Read_NowGateState(business_code);
+            List<Gate_StateInfo> gate_state =(business_code == "" || business_code == "undefined")? Item_Info.Read_NowGateState(): Item_Info.Read_NowGateState(business_code);
 
             //序列化
             string _data = File_Common.Serializer_Obj(gate_state);
@@ -1772,7 +1772,7 @@ namespace bjd_model
         public string Get_NowWaterInfo(string business_code)
         {
             //从数据库获取当前最新水情
-            List<Water_Info> now_waterinfo = WG_INFO.Read_Now_WaterInfo(business_code);
+            List<Water_Info> now_waterinfo = Item_Info.Read_Now_WaterInfo(business_code);
 
             //组合对象属性
             Dictionary<string, object> res = new Dictionary<string, object>();
@@ -1870,7 +1870,7 @@ namespace bjd_model
         public string Get_Nsbd_SectionInfo()
         {
             //从数据库获取南水北调交叉断面信息
-            Dictionary<string, ZGQ_SectionInfo> nsbd_sectioninfo = WG_INFO.Get_ZGQ_SectionInfo();
+            Dictionary<string, ZGQ_SectionInfo> nsbd_sectioninfo = Item_Info.Get_ZGQ_SectionInfo();
 
             return File_Common.Serializer_Obj(nsbd_sectioninfo);
         }

@@ -403,7 +403,7 @@ namespace bjd_model.Mike11
             double level3 = double.Parse(res_watercondition.Level3); //设计水位
             Warning_Level warning_level = Warning_Level.blue_warining;
             string level_name = "";
-            Struct_BasePars res_yhd = WG_INFO.Get_Res_YHDXHD_StrInfo(res_name, "溢洪道");
+            Struct_BasePars res_yhd = Item_Info.Get_Res_YHDXHD_StrInfo(res_name, "溢洪道");
             bool yhd_xh;
             if (res_yhd == null)
             {
@@ -452,7 +452,7 @@ namespace bjd_model.Mike11
         {
             List<Important_Inspect_UnitInfo> res_inspect_list = new List<Important_Inspect_UnitInfo>();
             string plan_code = model.Modelname;
-            List<Reservoir> res_info = WG_INFO.Get_ResInfo(Mysql_GlobalVar.now_instance);
+            List<Reservoir> res_info = Item_Info.Get_ResInfo(Mysql_GlobalVar.now_instance);
             ReachList reach_list = model.Mike11Pars.ReachList;
 
             //遍历水库
@@ -486,7 +486,7 @@ namespace bjd_model.Mike11
                 }
 
                 //溢洪道溢流泄洪判断
-                Struct_BasePars res_yhd = WG_INFO.Get_Res_YHDXHD_StrInfo(res_name, "溢洪道");
+                Struct_BasePars res_yhd = Item_Info.Get_Res_YHDXHD_StrInfo(res_name, "溢洪道");
                 bool yhd_xh;
                 if (res_yhd == null)
                 {
@@ -503,8 +503,8 @@ namespace bjd_model.Mike11
                     inspect_point = "大坝、溢洪道";
                 }
 
-                string at_city = WG_INFO.Get_SingleStruct_LocationInfo(res_name).city;
-                string admin_uint = WG_INFO.Get_SingleStruct_LocationInfo(res_name).admin_unit;
+                string at_city = Item_Info.Get_SingleStruct_LocationInfo(res_name).city;
+                string admin_uint = Item_Info.Get_SingleStruct_LocationInfo(res_name).admin_unit;
 
                 //水库的位置
                 List<PointXY> location = new List<PointXY>();
@@ -526,7 +526,7 @@ namespace bjd_model.Mike11
         public static List<Important_Inspect_UnitInfo> Get_Xzhq_Inspectinfo(HydroModel model, Dictionary<string, Xzhq_FloodRes> xzhq_result)
         {
             List<Important_Inspect_UnitInfo> xzhq_inspect_list = new List<Important_Inspect_UnitInfo>();
-            List<Xzhq_Info> xzhq_list = WG_INFO.Get_XzhqInfo();
+            List<Xzhq_Info> xzhq_list = Item_Info.Get_XzhqInfo();
             ReachList reach_list = model.Mike11Pars.ReachList;
             string plan_code = model.Modelname;
 
@@ -574,8 +574,8 @@ namespace bjd_model.Mike11
                     inspect_region = "蓄滞洪区";
                 }
 
-                string at_city = WG_INFO.Get_SingleStruct_LocationInfo(xzhq_name).city;
-                string admin_uint = WG_INFO.Get_SingleStruct_LocationInfo(xzhq_name).admin_unit;
+                string at_city = Item_Info.Get_SingleStruct_LocationInfo(xzhq_name).city;
+                string admin_uint = Item_Info.Get_SingleStruct_LocationInfo(xzhq_name).admin_unit;
 
                 //所在位置
                 List<PointXY> location = new List<PointXY>();
@@ -614,7 +614,7 @@ namespace bjd_model.Mike11
                     string reach_cnname = reach_mt[j].Reach_CNname;
 
                     //巡查信息
-                    Struct_Region_Info region_info = WG_INFO.Get_SingleStruct_LocationInfo(atreach);
+                    Struct_Region_Info region_info = Item_Info.Get_SingleStruct_LocationInfo(atreach);
                     if (region_info.city == "") continue;
                     string at_city = region_info.city;
                     string admin_uint = region_info.admin_unit;
@@ -649,7 +649,7 @@ namespace bjd_model.Mike11
                     AtReach atreach = AtReach.Get_Atreach(reach_md[j].Reach_Name, (reach_md[j].Start_Chainage + reach_md[j].End_Chainage) / 2);
 
                     //巡查信息
-                    Struct_Region_Info region_info = WG_INFO.Get_SingleStruct_LocationInfo(atreach);
+                    Struct_Region_Info region_info = Item_Info.Get_SingleStruct_LocationInfo(atreach);
                     if (region_info.city == "") continue;
                     string at_city = region_info.city;
                     string admin_uint = region_info.admin_unit;

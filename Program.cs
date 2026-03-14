@@ -209,7 +209,7 @@ namespace bjd_model
         //更新初始条件数据库
         public static void Update_LevelGate()
         {
-            WG_INFO.Update_LevelTable();
+            Item_Info.Update_LevelTable();
             //HH_INFO.Update_GateStateTable();
         }
 
@@ -217,7 +217,7 @@ namespace bjd_model
         public static void Update_ReachQH_RelationTable()
         {
             //从默认模型文件中获取模型
-            WG_INFO.Update_ReachQH_RelationTable();
+            Item_Info.Update_ReachQH_RelationTable();
         }
 
         //1、新建模型1(创建自动预报模型并计算)
@@ -362,7 +362,7 @@ namespace bjd_model
             sw.Start();
 
             //获取结果
-            List<Reach_BasePars> reach_info = WG_INFO.Get_MainReach_Info(Mysql_GlobalVar.now_instance);
+            List<Reach_BasePars> reach_info = Item_Info.Get_MainReach_Info(Mysql_GlobalVar.now_instance);
 
             sw.Stop();
             Console.WriteLine(File_Common.Serializer_Obj(reach_info));

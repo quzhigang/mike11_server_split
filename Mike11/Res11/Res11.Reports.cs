@@ -54,7 +54,7 @@ namespace bjd_model.Mike11
                 }
 
                 //河道内所有建筑物桩号
-                List<float> str_chainage = WG_INFO.Get_ReachStrInfo(reach_name);
+                List<float> str_chainage = Item_Info.Get_ReachStrInfo(reach_name);
 
                 //先获取断面名称
                 Dictionary<float, string> section_names = Get_Section_Names(model, reach_name, str_chainage);
@@ -121,17 +121,17 @@ namespace bjd_model.Mike11
                 string name = "";
 
                 //获取
-                for (int j = 0; j < WG_INFO.Str_BaseInfo.Count; j++)
+                for (int j = 0; j < Item_Info.Str_BaseInfo.Count; j++)
                 {
                     //先判断河道
-                    string reach_name = WG_INFO.Str_BaseInfo.ElementAt(j).Value.reach_name;
+                    string reach_name = Item_Info.Str_BaseInfo.ElementAt(j).Value.reach_name;
                     if (reachname != reach_name) continue;
 
                     //断面桩号与建筑物相近 则认为是建筑物
-                    double chainage = WG_INFO.Str_BaseInfo.ElementAt(j).Value.chainage;
+                    double chainage = Item_Info.Str_BaseInfo.ElementAt(j).Value.chainage;
                     if (Math.Abs(chainage - section_chainage) < 0.1)
                     {
-                        name = WG_INFO.Str_BaseInfo.ElementAt(j).Value.cn_name;
+                        name = Item_Info.Str_BaseInfo.ElementAt(j).Value.cn_name;
                         break;
                     }
                 }

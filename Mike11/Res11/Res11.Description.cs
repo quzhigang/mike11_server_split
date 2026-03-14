@@ -267,7 +267,7 @@ namespace bjd_model.Mike11
             DateTime time = DateTime.Now;
 
             //获取各个节制闸 闸前断面和其水位过程
-            Dictionary<string, AtReach> jzz_dic = WG_INFO.Get_TypeGate_FromModel(hydromodel, GateType.YLZ);
+            Dictionary<string, AtReach> jzz_dic = Item_Info.Get_TypeGate_FromModel(hydromodel, GateType.YLZ);
             string reach_name = jzz_dic.ElementAt(0).Value.reachname;
 
             //获取闸前最近的一个非建筑物所在的断面编号

@@ -384,7 +384,7 @@ namespace bjd_model.Mike11
             Modify_ReachInitial(ref initial_water, now_waterlevel);
 
             //更新数据库初始水情信息
-            string initial_water_info = WG_INFO.Get_Model_InitialInfo(hydromodel); 
+            string initial_water_info = Item_Info.Get_Model_InitialInfo(hydromodel); 
             Update_ModelPara_DBInfo(hydromodel.Modelname, "mike11_initial_info", initial_water_info);
         }
 
@@ -419,7 +419,7 @@ namespace bjd_model.Mike11
             Modify_ReachInitial(ref initial_water, new_waterlevel);
 
             //更新初始水情信息
-            string initial_water_info = WG_INFO.Get_Model_InitialInfo(hydromodel, inital_level);
+            string initial_water_info = Item_Info.Get_Model_InitialInfo(hydromodel, inital_level);
             Update_ModelPara_DBInfo(hydromodel.Modelname, "mike11_initial_info", initial_water_info);
         }
 
@@ -435,7 +435,7 @@ namespace bjd_model.Mike11
             List<Water_Condition> now_waterlevel = Hd11.Read_NowWater();
 
             //获取所有水库基本信息
-            List<Reservoir> res_info = WG_INFO.Get_ResInfo(Mysql_GlobalVar.now_instance);
+            List<Reservoir> res_info = Item_Info.Get_ResInfo(Mysql_GlobalVar.now_instance);
 
             //从数据库获取一维模型水库的初始水情条件，如果并没有设置过初始水位(数据库无记录)，则直接返回不再修改
             Dictionary<string, double> res_initial_levels = Get_Res_InitialLevel(hydromodel.Modelname);
@@ -468,7 +468,7 @@ namespace bjd_model.Mike11
         public static Dictionary<string, double> Get_Res_InitialLevel(string model_name)
         {
             Dictionary<string, double> res_initial_levels = new Dictionary<string, double>();
-            string intial_water = WG_INFO.Get_Model_SingleParInfo(model_name, "mike11_initial_info");
+            string intial_water = Item_Info.Get_Model_SingleParInfo(model_name, "mike11_initial_info");
             if (intial_water == null || intial_water == "") return null;
 
             Dictionary<string, List<List<object>>> intial_water_obj = JsonConvert.DeserializeObject<Dictionary<string, List<List<object>>>>(intial_water);
@@ -601,7 +601,7 @@ namespace bjd_model.Mike11
             }
 
             //获取 有实测水位的水库水位站 控制的一位河道HD11中初始条件断面(键为水库水情监测断面名称，值为控制的河段集合)
-            Dictionary<string, List<AtReach>> res_initial_atreach = WG_INFO.GetRes_ControlInitialAtreach(res_levels.Keys.ToList());
+            Dictionary<string, List<AtReach>> res_initial_atreach = Item_Info.GetRes_ControlInitialAtreach(res_levels.Keys.ToList());
 
             //修正水库初始水位
             for (int i = 0; i < res_initial_atreach.Count; i++)
@@ -626,13 +626,13 @@ namespace bjd_model.Mike11
         private static void Modify_ReachInitial(ref Dictionary<AtReach, double> initial_water, List<Water_Condition> now_watercondition)
         {
             //从数据库获取河道 控制断面 水位流量关系
-            Dictionary<AtReach, List<double[]>> section_qhrelations = WG_INFO.Get_SectionQHrelation();
+            Dictionary<AtReach, List<double[]>> section_qhrelations = Item_Info.Get_SectionQHrelation();
 
             //根据特定点水位推算河道流量(如果只有监测水位的话)
-            Dictionary<AtReach, double> reach_mainq = WG_INFO.Get_MainStatin_Discharge(now_watercondition, section_qhrelations);
+            Dictionary<AtReach, double> reach_mainq = Item_Info.Get_MainStatin_Discharge(now_watercondition, section_qhrelations);
 
             //根据控制断面水位流量关系推算沿线控制断面水位(这些控制断面与初始条件对应，是需要修改的断面)
-            Dictionary<AtReach, double> reach_level = WG_INFO.Insert_SectionLevel_FromQH(section_qhrelations, reach_mainq);
+            Dictionary<AtReach, double> reach_level = Item_Info.Insert_SectionLevel_FromQH(section_qhrelations, reach_mainq);
 
             //修改河道控制断面水位值
             for (int i = 0; i < initial_water.Count; i++)

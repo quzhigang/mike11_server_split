@@ -40,7 +40,7 @@ namespace bjd_model.Mike11
             Dictionary<string, Dictionary<DateTime, double>> allres_gzdd_inflow = Get_ResFlowIn_Gzdd(hydromodel, model_instance);
 
             //获取各水库初始水位(从模型中)
-            Dictionary<string, double> initial_levels = WG_INFO.GetRes_InitialValue_FromModel(hydromodel);
+            Dictionary<string, double> initial_levels = Item_Info.GetRes_InitialValue_FromModel(hydromodel);
 
             //获取水库迭代水位(初始水位和约束水位之间的各分层水位)
             Dictionary<string, double> res_iteration_level = Get_ResIter_Levels(res_level_constraint);
@@ -128,7 +128,7 @@ namespace bjd_model.Mike11
             List<List<string>> res_batch_list = new List<List<string>>();
 
             //获取所有有上游水库的 水库的上游水库信息
-            Dictionary<string, Dictionary<string,double>> res_upreslist = WG_INFO.Get_Res_UpResList(model_instance);
+            Dictionary<string, Dictionary<string,double>> res_upreslist = Item_Info.Get_Res_UpResList(model_instance);
 
             //刷选出最上游水库、区间水库和最下游水库
             List<string> up_res = new List<string>();
@@ -176,7 +176,7 @@ namespace bjd_model.Mike11
             List<string> have_downres_list = Get_DownRes_list(model_instance);
 
             //获取所有水库清单
-            Dictionary<string, Dictionary<string, double>> res_upreslist = WG_INFO.Get_Res_UpResList(model_instance);
+            Dictionary<string, Dictionary<string, double>> res_upreslist = Item_Info.Get_Res_UpResList(model_instance);
 
             //刷选最下游水库清单
             for (int i = 0; i < res_upreslist.Count; i++)
@@ -192,7 +192,7 @@ namespace bjd_model.Mike11
         private static List<string> Get_UpRes_list(string model_instance)
         {
             //获取所有有上游水库的 水库的上游水库信息
-            Dictionary<string, Dictionary<string,double>> res_upreslist = WG_INFO.Get_Res_UpResList(model_instance);
+            Dictionary<string, Dictionary<string,double>> res_upreslist = Item_Info.Get_Res_UpResList(model_instance);
 
             //刷选出有下游水库的上游水库
             List<string> up_res = new List<string>();
@@ -212,7 +212,7 @@ namespace bjd_model.Mike11
         private static List<string> Get_DownRes_list(string model_instance)
         {
             //获取所有有上游水库的 水库的上游水库信息
-            Dictionary<string, Dictionary<string,double>> res_upreslist = WG_INFO.Get_Res_UpResList(model_instance);
+            Dictionary<string, Dictionary<string,double>> res_upreslist = Item_Info.Get_Res_UpResList(model_instance);
 
             //刷选出有下游水库的上游水库
             List<string> up_res = new List<string>();
@@ -245,8 +245,8 @@ namespace bjd_model.Mike11
                 string res_name = have_downres_res[i];
 
                 //获取这些水库的泄洪建筑物信息(每个水库只算一次，优先泄洪洞)
-                Struct_BasePars res_xhd = WG_INFO.Get_Res_YHDXHD_StrInfo(res_name, "泄洪洞");
-                Struct_BasePars res_yhd = WG_INFO.Get_Res_YHDXHD_StrInfo(res_name, "溢洪道");
+                Struct_BasePars res_xhd = Item_Info.Get_Res_YHDXHD_StrInfo(res_name, "泄洪洞");
+                Struct_BasePars res_yhd = Item_Info.Get_Res_YHDXHD_StrInfo(res_name, "溢洪道");
                 if (res_close == true)  //全关就都关
                 {
                     if (res_xhd != null)
@@ -333,7 +333,7 @@ namespace bjd_model.Mike11
             Reservoir res = Reservoir.Get_Res_Info(model_instance, res_name);
 
             //入库流量过程
-            Dictionary<string, Res_InSection_BndID> res_inflows = WG_INFO.Get_ResInFlow_SectionBndID(model_instance);
+            Dictionary<string, Res_InSection_BndID> res_inflows = Item_Info.Get_ResInFlow_SectionBndID(model_instance);
             Res_InSection_BndID res_inflow = res_inflows[res_name];
             List<Dictionary<DateTime, double>> bnd_inqs = Res11.Get_Res_BndInQ(hydromodel, res, res_inflow);
             Dictionary<DateTime, double> bnd_inqcombine = Dfs0.Combine_Dic(bnd_inqs);
@@ -346,7 +346,7 @@ namespace bjd_model.Mike11
             Dictionary<string, Dictionary<DateTime, double>> result = new Dictionary<string, Dictionary<DateTime, double>>();
 
             //各水库的区间子流域ID和距离该水库距离
-            Dictionary<string, Dictionary<string, double>> res_inflows = WG_INFO.Get_Res_Subcatchment_InFlow(model_instance);
+            Dictionary<string, Dictionary<string, double>> res_inflows = Item_Info.Get_Res_Subcatchment_InFlow(model_instance);
             for (int i = 0; i < res_inflows.Count; i++)
             {
                 string res_name = res_inflows.ElementAt(i).Key;
@@ -410,8 +410,8 @@ namespace bjd_model.Mike11
             Reservoir res_info = Reservoir.Get_Res_Info(model_instance, res_name);
 
             //获取该水库的溢洪道和泄洪洞信息
-            Struct_BasePars res_yhd = WG_INFO.Get_Res_YHDXHD_StrInfo(res_name, "溢洪道");
-            Struct_BasePars res_xhd = WG_INFO.Get_Res_YHDXHD_StrInfo(res_name, "泄洪洞");
+            Struct_BasePars res_yhd = Item_Info.Get_Res_YHDXHD_StrInfo(res_name, "溢洪道");
+            Struct_BasePars res_xhd = Item_Info.Get_Res_YHDXHD_StrInfo(res_name, "泄洪洞");
 
             //水库出流约束
             Res_Outflow_Constraint res_out_cons = Res_Outflow_Constraint.Get_Res_Outflow_Constraint(res_outflow_constraint, res_info.Stcd);
@@ -450,7 +450,7 @@ namespace bjd_model.Mike11
             Dictionary<string, List<DdInfo>> res = new Dictionary<string, List<DdInfo>>();
             
             //该水库的所有建筑
-            List<Struct_BasePars> res_allstr = WG_INFO.Get_Res_All_StrInfo( res_name);
+            List<Struct_BasePars> res_allstr = Item_Info.Get_Res_All_StrInfo( res_name);
 
             //加入全关调度信息
             for (int i = 0; i < res_allstr.Count; i++)
