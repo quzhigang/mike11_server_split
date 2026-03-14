@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -203,6 +203,17 @@
     <Compile Include="Mike11\Bnd11.cs" />
     <Compile Include="Mike11\Hd11.cs" />
     <Compile Include="Mike11\Nwk11.cs" />
+    <Compile Include="Mike11\Nwk11\Nwk11.Catchment.cs" />
+    <Compile Include="Mike11\Nwk11\Nwk11.GateAdd.cs" />
+    <Compile Include="Mike11\Nwk11\Nwk11.GateAddFhk.cs" />
+    <Compile Include="Mike11\Nwk11\Nwk11.GateAttributes.cs" />
+    <Compile Include="Mike11\Nwk11\Nwk11.GateDispatch.cs" />
+    <Compile Include="Mike11\Nwk11\Nwk11.GateFhkOptions.cs" />
+    <Compile Include="Mike11\Nwk11\Nwk11.ReachOperations.cs" />
+    <Compile Include="Mike11\Nwk11\Nwk11.Models.cs" />
+    <Compile Include="Mike11\Nwk11\Nwk11.CatchmentList.cs" />
+    <Compile Include="Mike11\Nwk11\Nwk11.ReachList.cs" />
+    <Compile Include="Mike11\Nwk11\Nwk11.Controls.cs" />
     <Compile Include="Mike11\Reach.cs" />
     <Compile Include="Mike11\Res11.cs" />
     <Compile Include="Mike11\Res11\Res11.Balance.cs" />
