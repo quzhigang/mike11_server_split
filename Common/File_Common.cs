@@ -11,7 +11,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using bjd_model.Const_Global;
 using bjd_model.Mike11;
-using bjd_model.Mike21;
 using Newtonsoft.Json;
 
 namespace bjd_model.Common

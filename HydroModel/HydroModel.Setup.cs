@@ -21,9 +21,7 @@ using System.Web.Script.Serialization;
 using bjd_model.Common;
 using bjd_model.CatchMent;
 using bjd_model.Const_Global;
-using bjd_model.Mike_Flood;
 using bjd_model.Mike11;
-using bjd_model.Mike21;
 using System.Net;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
@@ -57,9 +55,6 @@ namespace bjd_model
 
             //纠正可控建筑物文件夹路径为当前文件夹、基础模型建筑物为时间类型的，如果基础模型模拟时间不在现模型模拟时间范围内，则改为规则调度
             Modify_Timefile(modelname);
-
-            this.Mike21Pars = this.BaseModel.Mike21Pars;
-            this.CoupleLinklist = this.BaseModel.CoupleLinklist;
 
             //如果基础模型不是default,则将基础模型的dfs0、dfs1拷贝过来
             //如果有一个边界条件dfs0不存在，则拷贝基础模型的
@@ -139,7 +134,6 @@ namespace bjd_model
             model.ModelGlobalPars = new Model_GlobalPars();
             model.RfPars = new RF_Pars();
             model.Mike11Pars = new Mike11_Pars();
-            model.Mike21Pars = new Mike21_Pars();
 
             //从默认模型文件中 更新 默认模型的各参数
             UpdatePars_FromModelFiles(ref model);
@@ -170,7 +164,6 @@ namespace bjd_model
             model.ModelGlobalPars = new Model_GlobalPars();
             model.RfPars = new RF_Pars();
             model.Mike11Pars = new Mike11_Pars();
-            model.Mike21Pars = new Mike21_Pars();
 
             //从默认模型文件中 更新 默认模型的各参数
             UpdatePars_FromModelFiles(ref model);
@@ -210,20 +203,6 @@ namespace bjd_model
                 Mike11Pars.SectionList = Sectionlist;
             }
 
-            //从mesh中获取mesh参数
-            if (hydromodel.Modelfiles.Mesh_filename != "")
-            {
-                MeshPars Meshparslist = hydromodel.Mike21Pars.MeshParsList;
-                Mesh.GetDefault_MeshInfo(hydromodel.Modelfiles.Mesh_filename, ref Meshparslist);
-            }
-
-            //m21fm相关二维通用参数、dike、weir 和 部分全局参数(坐标投影)获取
-            Model_GlobalPars GlobalPars = hydromodel.ModelGlobalPars;
-            if (hydromodel.Modelfiles.M21fm_filename != "")
-            {
-                M21fm.GetDefault_M21fmParameters(ref hydromodel);
-            }
-
             //Bnd11一维边界条件获取
             if (hydromodel.Modelfiles.Bnd11_filename != "")
             {
@@ -249,6 +228,7 @@ namespace bjd_model
             }
 
             //Simulate全局参数和部分一维参数获取
+            Model_GlobalPars GlobalPars = hydromodel.ModelGlobalPars;
             if (hydromodel.Modelfiles.Simulate_filename != "")
             {
                 Sim11.GetDefault_M11SimulatePars(hydromodel.Modelfiles.Simulate_filename, ref GlobalPars, ref Mike11Pars);
@@ -256,8 +236,7 @@ namespace bjd_model
 
             //RR11流域获取
             if (hydromodel.ModelGlobalPars.Select_model == CalculateModel.only_rr ||
-                 hydromodel.ModelGlobalPars.Select_model == CalculateModel.rr_and_hd ||
-                  hydromodel.ModelGlobalPars.Select_model == CalculateModel.rr_hd_flood)
+                 hydromodel.ModelGlobalPars.Select_model == CalculateModel.rr_and_hd)
             {
                 RR11.GetDefault_AverageRF();             //流域各月平均降雨
                 RR11.GetDefault_AverageEvp();           //流域各月平均蒸发
@@ -265,13 +244,6 @@ namespace bjd_model
                 RR11.GetCatchmentInfo(hydromodel.Modelfiles.Rr11_filename, ref hydromodel);   //流域详细信息
             }
 
-            //couple耦合连接获取
-            if (hydromodel.Modelfiles.Couple_filename != "")
-            {
-                CoupleLinkList Couplelinklist = new CoupleLinkList();
-                Couple.GetCoupleInfo(hydromodel.Modelfiles.Couple_filename, ref Couplelinklist);
-                hydromodel.CoupleLinklist = Couplelinklist;
-            }
         }
 
         //无参初始化
@@ -284,10 +256,8 @@ namespace bjd_model
             this.BaseModel = null;
             this.Modelfiles = null;
             this.Mike11Pars = null;
-            this.Mike21Pars = null;
             this.ModelGlobalPars = null;
             this.RfPars = null;
-            this.CoupleLinklist = null;
         }
 
         //根据设计洪水选择计算模拟时间

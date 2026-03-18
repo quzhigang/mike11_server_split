@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using bjd_model.Mike11;
-using bjd_model.Mike21;
 
 namespace bjd_model.Common
 {

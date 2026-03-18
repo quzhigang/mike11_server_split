@@ -21,9 +21,7 @@ using System.Web.Script.Serialization;
 using bjd_model.Common;
 using bjd_model.CatchMent;
 using bjd_model.Const_Global;
-using bjd_model.Mike_Flood;
 using bjd_model.Mike11;
-using bjd_model.Mike21;
 using System.Net;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
@@ -57,8 +55,6 @@ namespace bjd_model
             //其他参数重新初始化
             this.RfPars = new RF_Pars();
             this.Mike11Pars = new Mike11_Pars();
-            this.Mike21Pars = new Mike21_Pars();
-            this.CoupleLinklist = new CoupleLinkList();
         }
 
         //有基础模型的构造函数
@@ -101,12 +97,6 @@ namespace bjd_model
 
         //一维参数
         public Mike11_Pars Mike11Pars { get; set; }
-
-        //二维参数
-        public Mike21_Pars Mike21Pars { get; set; }
-
-        //耦合参数
-        public CoupleLinkList CoupleLinklist { get; set; }  //一二维耦合连接结合
         #endregion
 
         public string Get_ModelDesc()
@@ -163,12 +153,6 @@ namespace bjd_model
                 case CalculateModel.ad_and_hd:
                     model_type = "水质、水动力一维耦合模型";
                     break;
-                case CalculateModel.only_m21:
-                    model_type = "水动力二维模型";
-                    break;
-                case CalculateModel.rr_hd_flood:
-                    model_type = "产汇流、水动力一维、二维耦合模型";
-                    break;
             }
             model_desc.Add("模型组合：" + model_type);
 
@@ -176,8 +160,7 @@ namespace bjd_model
             string RFmodel = "无";
             if (model.RfPars.Catchmentlist.Catchment_infolist != null &&
                 (model.ModelGlobalPars.Select_model == CalculateModel.only_rr ||
-                model.ModelGlobalPars.Select_model == CalculateModel.rr_and_hd ||
-                model.ModelGlobalPars.Select_model == CalculateModel.rr_hd_flood))
+                model.ModelGlobalPars.Select_model == CalculateModel.rr_and_hd))
             {
                 switch (model.RfPars.Catchmentlist.Catchment_infolist[0].Now_RfmodelType)
                 {
@@ -219,15 +202,10 @@ namespace bjd_model
             Nwk11.Rewrite_Nkw11_UpdateFile(this);
             Xns11.Rewrite_Xns11copy_UpdateFile(this);
 
-            Mesh.Rewrite_Mesh_UpdateFile(this);
-            M21fm.Rewrite_M21fm_UpdateFile(this);
-
             Bnd11.Rewrite_Bnd11_UpdateFile(this);
             Hd11.Rewrite_Hd11_UpdateFile(this);
             Ad11.Rewrite_Ad11_UpdateFile(this);
             Sim11.RewriteSimulate_SelectModel(this);
-
-            Couple.Rewrite_Couple_UpdateFile(this);
 
             Console.WriteLine("模型构建成功！");
             Console.WriteLine("");
@@ -410,18 +388,7 @@ namespace bjd_model
         {
             //获取引擎名
             string engine_name;
-            if (this.ModelGlobalPars.Select_model == CalculateModel.rr_hd_flood)
-            {
-                engine_name = EngineName.FemEngineMFGPUSP.ToString();  //适合Flood的单精度GPU计算
-            }
-            else if (this.ModelGlobalPars.Select_model == CalculateModel.only_m21)
-            {
-                engine_name = EngineName.FemEngineHDGPUSP.ToString(); //适合纯mike21fm单精度GPU计算
-            }
-            else
-            {
-                engine_name = EngineName.Application.ToString();   //单独非XAJ产汇流、一维河道以及两者耦合 1D模拟
-            }
+            engine_name = EngineName.Application.ToString();   //单独非XAJ产汇流、一维河道以及两者耦合 1D模拟
 
             //获取当前所有正在运行的进程,返回进程类的数组
             Process[] pros = Process.GetProcesses();
@@ -492,21 +459,8 @@ namespace bjd_model
             //其他则使用DOS程序调用相应引擎进行计算
             string simulate_file;
             string engine_name;
-            if (this.ModelGlobalPars.Select_model == CalculateModel.rr_hd_flood)
-            {
-                simulate_file = this.Modelfiles.Couple_filename;
-                engine_name = EngineName.FemEngineMFGPUSP + ".exe";  //适合Flood的单精度GPU计算
-            }
-            else if (this.ModelGlobalPars.Select_model == CalculateModel.only_m21)
-            {
-                simulate_file = this.Modelfiles.M21fm_filename;
-                engine_name = EngineName.FemEngineHDGPUSP + ".exe"; //适合m21fm的单精度GPU计算
-            }
-            else 
-            {
-                simulate_file =  this.Modelfiles.Simulate_filename;  //"-s " + 静音方式，mike11.exe计算过程中不弹出对话框，"DHI.Mike1D.Application.exe"没有这个标识
-                engine_name = "DHI.Mike1D.Application.exe";   //不知道为什么，用全路径才识别 单独非XAJ产汇流、一维河道以及两者耦合
-            }
+            simulate_file =  this.Modelfiles.Simulate_filename;  //"-s " + 静音方式，mike11.exe计算过程中不弹出对话框，"DHI.Mike1D.Application.exe"没有这个标识
+            engine_name = "DHI.Mike1D.Application.exe";   //不知道为什么，用全路径才识别 单独非XAJ产汇流、一维河道以及两者耦合
 
             ShellExecute(IntPtr.Zero, "open", engine_name, simulate_file, null, 0);  //最后一个参数为0，表示不显示cmd对话框
         }
@@ -609,12 +563,8 @@ namespace bjd_model
 
             //如果是自动预报，通过判断，对超过降雨量阈值的自动预报主要结果进行保存
             if (this.Modelname == Model_Const.AUTO_MODELNAME) Res11.Save_History_AutoForcastRes();
-
-            //如果业务模型包含二维，则请求二维模型服务参数设置和计算服务
-            List<string> instance_list = Get_Model_Instance_list(this.Modelname);
-            if (instance_list.Any(s => s.Contains("mike21"))) Request_Mike21_Server(this, instance_list, model_instance, business_code);
         }
-        #endregion 
+        #endregion
     }
 }
 

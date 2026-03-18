@@ -214,7 +214,7 @@
     <Compile Include="HydroModel\HydroModel.Model_GlobalPars.cs" />
     <Compile Include="HydroModel\HydroModel.RF_Pars.cs" />
     <Compile Include="HydroModel\HydroModel.Mike11_Pars.cs" />
-    <Compile Include="HydroModel\HydroModel.Mike21_Pars.cs" />
+
     <Compile Include="HydroModel\HydroModel.Setup.cs" />
     <Compile Include="HydroModel\HydroModel.Plan.cs" />
     <Compile Include="HydroModel\HydroModel.Persistence.State.cs" />
@@ -222,10 +222,10 @@
     <Compile Include="HydroModel\HydroModel.Persistence.Lifecycle.cs" />
     <Compile Include="HydroModel\HydroModel.Operations.RR.cs" />
     <Compile Include="HydroModel\HydroModel.Operations.1D.cs" />
-    <Compile Include="HydroModel\HydroModel.Operations.2D.cs" />
+
     <Compile Include="HydroModel\HydroModel.Query.1D.cs" />
-    <Compile Include="HydroModel\HydroModel.Query.2D.cs" />
-    <Compile Include="Mike Flood\Couple.cs" />
+
+
     <Compile Include="Mike11\Ad11.cs" />
     <Compile Include="Mike11\Bnd11.cs" />
     <Compile Include="Mike11\GeometryPointXYZ.cs" />
@@ -279,10 +279,7 @@
     <Compile Include="Mike11\SingleResoptdd.cs" />
     <Compile Include="Mike11\WgOptdd.cs" />
     <Compile Include="Mike11\Xns11.cs" />
-    <Compile Include="Mike21\Dfsu.cs" />
-    <Compile Include="Mike21\M21fm.cs" />
-    <Compile Include="Mike21\Mdf.cs" />
-    <Compile Include="Mike21\Mesh.cs" />
+
     <Compile Include="Model_Ser.ashx.cs">
       <DependentUpon>Model_Ser.ashx</DependentUpon>
     </Compile>

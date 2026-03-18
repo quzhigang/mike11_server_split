@@ -21,9 +21,7 @@ using System.Web.Script.Serialization;
 using bjd_model.Common;
 using bjd_model.CatchMent;
 using bjd_model.Const_Global;
-using bjd_model.Mike_Flood;
 using bjd_model.Mike11;
-using bjd_model.Mike21;
 using System.Net;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
@@ -90,15 +88,12 @@ namespace bjd_model
            Nwk11.Add_Fhkstr(ref hydromodel, ref fhk_str);
         }
 
-        //新建分洪口 -- 默认调度规则，并耦合到二维
+        //新建分洪口 -- 默认调度规则
         public string Add_Fhkstr_AndLink(PointXY p, double fhk_width)
         {
             HydroModel hydromodel = this;
             FhkstrInfo fhkstrinfo = Nwk11.Get_Default_Fhkstrinfo(hydromodel, p, fhk_width);
             string fhkstrname = Nwk11.Add_Fhkstr(ref hydromodel, ref fhkstrinfo);
-
-            //添加侧向建筑物连接
-            Add_SideStructure_Link(fhkstrname);
 
             return fhkstrname;
         }

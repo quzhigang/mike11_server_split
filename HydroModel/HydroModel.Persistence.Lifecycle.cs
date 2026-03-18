@@ -21,9 +21,7 @@ using System.Web.Script.Serialization;
 using bjd_model.Common;
 using bjd_model.CatchMent;
 using bjd_model.Const_Global;
-using bjd_model.Mike_Flood;
 using bjd_model.Mike11;
-using bjd_model.Mike21;
 using System.Net;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
@@ -223,7 +221,6 @@ namespace bjd_model
 
             //模型文件夹
             string model_dirname = Model_Const.Get_Sysdir() + @"\" + Model_Const.MODEL_DIRNAME + @"\" + model_instance + @"\" + model.Modelname;
-            modelfiles.Couple_filename = model_dirname + @"\" + Path.GetFileName(modelfiles.Couple_filename);
 
             modelfiles.Simulate_filename = model_dirname + @"\" + Path.GetFileName(modelfiles.Simulate_filename);
             modelfiles.Nwk11_filename = model_dirname + @"\" + Path.GetFileName(modelfiles.Nwk11_filename);
@@ -233,19 +230,12 @@ namespace bjd_model
             modelfiles.Hd11_filename = model_dirname + @"\" + Path.GetFileName(modelfiles.Hd11_filename);
             modelfiles.Ad11_filename = model_dirname + @"\" + Path.GetFileName(modelfiles.Ad11_filename);
 
-            modelfiles.M21fm_filename = model_dirname + @"\" + Path.GetFileName(modelfiles.M21fm_filename);
-            modelfiles.Mesh_filename = model_dirname + @"\" + Path.GetFileName(modelfiles.Mesh_filename);
-            modelfiles.M21caolv_filename = model_dirname + @"\" + Path.GetFileName(modelfiles.M21caolv_filename);
-
             //新建结果文件夹
             string model_result_dirname = Model_Const.Get_Sysdir() + @"\" + Model_Const.MODEL_DIRNAME + @"\" + model_instance + @"\" + model.Modelname + @"\" + "results";
             modelfiles.Hdres11_filename = model_result_dirname + @"\" + Path.GetFileName(modelfiles.Hdres11_filename);
             modelfiles.Rrres11_filename = model_result_dirname + @"\" + Path.GetFileName(modelfiles.Rrres11_filename);
             modelfiles.XAJres_filename = model_result_dirname + @"\" + Path.GetFileName(modelfiles.XAJres_filename);
             modelfiles.Hdtxt_filename = model_result_dirname + @"\" + Path.GetFileName(modelfiles.Hdtxt_filename);
-
-            modelfiles.Dfsu1_gc_filename = model_result_dirname + @"\" + Path.GetFileName(modelfiles.Dfsu1_gc_filename);
-            modelfiles.Dfsu2_tj_filenane = model_result_dirname + @"\" + Path.GetFileName(modelfiles.Dfsu2_tj_filenane);
 
             modelfiles.Progressinfo_filename = model_result_dirname + @"\" + Path.GetFileName(modelfiles.Progressinfo_filename);
         }

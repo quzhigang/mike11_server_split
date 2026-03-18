@@ -21,9 +21,7 @@ using System.Web.Script.Serialization;
 using bjd_model.Common;
 using bjd_model.CatchMent;
 using bjd_model.Const_Global;
-using bjd_model.Mike_Flood;
 using bjd_model.Mike11;
-using bjd_model.Mike21;
 using System.Net;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
@@ -52,9 +50,6 @@ namespace bjd_model
         #endregion
 
         #region 属性
-        //耦合模拟文件地址
-        public string Couple_filename { get; set; }
-
         //*********** Mike11各模型文件地址************//
         //mike11模型文件地址
         public string Simulate_filename { get; set; }
@@ -75,17 +70,6 @@ namespace bjd_model
 
         //进度信息文件地址
         public string Progressinfo_filename { get; set; }
-        //***********************************************//
-
-
-        //******* Mike21各模型文件最新地址和参数*********//
-        public string M21fm_filename { get; set; }
-        public string Mesh_filename { get; set; }
-        public string M21caolv_filename { get; set; }
-
-        //mike21结果文件地址
-        public string Dfsu1_gc_filename { get; set; }
-        public string Dfsu2_tj_filenane { get; set; }
         //***********************************************//
         #endregion
 
@@ -115,8 +99,6 @@ namespace bjd_model
             DirectoryInfo modeldirinfo = new DirectoryInfo(dirname);
 
             //先从文件中判断 默认模型是那种模型
-            modelfiles.Couple_filename = Directory.GetFiles(dirname, "*.couple").Length != 0 ? modeldirinfo.FullName + @"\" + Path.GetFileName(Directory.GetFiles(dirname, "*.couple")[0]) : "";
-
             modelfiles.Simulate_filename = Directory.GetFiles(dirname, "*.sim11").Length != 0 ? modeldirinfo.FullName + @"\" + Path.GetFileName(Directory.GetFiles(dirname, "*.sim11")[0]) : "";
             modelfiles.Nwk11_filename = Directory.GetFiles(dirname, "*.nwk11").Length != 0 ? modeldirinfo.FullName + @"\" + Path.GetFileName(Directory.GetFiles(dirname, "*.nwk11")[0]) : "";
             modelfiles.Xns11_filename = Directory.GetFiles(dirname, "*.xns11").Length != 0 ? modeldirinfo.FullName + @"\" + Path.GetFileName(Directory.GetFiles(dirname, "*.xns11")[0]) : "";
@@ -125,10 +107,6 @@ namespace bjd_model
             modelfiles.Hd11_filename = Directory.GetFiles(dirname, "*.hd11").Length != 0 ? modeldirinfo.FullName + @"\" + Path.GetFileName(Directory.GetFiles(dirname, "*.hd11")[0]) : "";
             modelfiles.Ad11_filename = Directory.GetFiles(dirname, "*.ad11").Length != 0 ? modeldirinfo.FullName + @"\" + Path.GetFileName(Directory.GetFiles(dirname, "*.ad11")[0]) : "";
 
-            modelfiles.M21fm_filename = Directory.GetFiles(dirname, "*.m21fm").Length != 0 ? modeldirinfo.FullName + @"\" + Path.GetFileName(Directory.GetFiles(dirname, "*.m21fm")[0]) : "";
-            modelfiles.Mesh_filename = Directory.GetFiles(dirname, "*.mesh").Length != 0 ? modeldirinfo.FullName + @"\" + Path.GetFileName(Directory.GetFiles(dirname, "*.mesh")[0]) : "";
-            modelfiles.M21caolv_filename = Directory.GetFiles(dirname, "*.dfsu").Length != 0 ? modeldirinfo.FullName + @"\" + Path.GetFileName(Directory.GetFiles(dirname, "*.dfsu")[0]) : "";
-
             //新建结果文件夹
             if (Directory.Exists(modeldirinfo.FullName + @"\" + "results")) Directory.Delete(modeldirinfo.FullName + @"\" + "results", true);
             DirectoryInfo modelresultdirinfo = Directory.CreateDirectory(modeldirinfo.FullName + @"\" + "results");
@@ -136,15 +114,12 @@ namespace bjd_model
             modelfiles.Hd_addres11_filename = modelresultdirinfo.FullName + @"\hd_result.ADDOUT.res1d";
             modelfiles.Adres11_filename = modelresultdirinfo.FullName + @"\ad_result.res1d";
 
-            modelfiles.Dfsu1_gc_filename = modelresultdirinfo.FullName + @"\m21_gc.dfsu";     //这个可能有问题,没重写
             modelfiles.Progressinfo_filename = modelresultdirinfo.FullName + @"\progress.txt"; //这个也没问题
         }
 
         //设置模型属性 -- 全部为空
         public void SetDefault()
         {
-            this.Couple_filename = "";
-
             this.Simulate_filename = "";
             this.Nwk11_filename = "";
             this.Xns11_filename = "";
@@ -153,18 +128,12 @@ namespace bjd_model
             this.Hd11_filename = "";
             this.Ad11_filename = "";
 
-            this.M21fm_filename = "";
-            this.Mesh_filename = "";
-            this.M21caolv_filename = "";
-
             this.Hdres11_filename = "";
             this.Hd_addres11_filename = "";
             this.Rrres11_filename = "";
             this.Adres11_filename = "";
             this.XAJres_filename = "";
             this.Hdtxt_filename = "";
-            this.Dfsu1_gc_filename = "";
-            this.Dfsu2_tj_filenane = "";
             this.Progressinfo_filename = "";
         }
 
@@ -180,7 +149,6 @@ namespace bjd_model
 
             //新建该模型方案的文件夹
             DirectoryInfo modeldirinfo = Directory.CreateDirectory(dirname + @"\" + modelname);
-            this.Couple_filename = modeldirinfo.FullName + @"\ouhe.couple";
 
             this.Simulate_filename = modeldirinfo.FullName + @"\simulate11.sim11";
             this.Nwk11_filename = modeldirinfo.FullName + @"\hd.nwk11";
@@ -189,10 +157,6 @@ namespace bjd_model
             this.Rr11_filename = modeldirinfo.FullName + @"\rainfall.rr11";
             this.Hd11_filename = modeldirinfo.FullName + @"\cs.hd11";
             this.Ad11_filename = modeldirinfo.FullName + @"\cs.ad11";
-
-            this.M21fm_filename = modeldirinfo.FullName + @"\simulate21.m21fm";
-            this.Mesh_filename = modeldirinfo.FullName + @"\dixing.mesh";
-            this.M21caolv_filename = modeldirinfo.FullName + @"\caolv.dfsu";
 
             //新建结果文件夹
             DirectoryInfo modelresultdirinfo = Directory.CreateDirectory(modeldirinfo.FullName + @"\" + "results");
@@ -203,9 +167,6 @@ namespace bjd_model
             this.Adres11_filename = modelresultdirinfo.FullName + @"\ad_result.res1d";
             this.XAJres_filename = modelresultdirinfo.FullName + @"\XAJ_result.dfs0";
             this.Hdtxt_filename = modelresultdirinfo.FullName + @"\jg.txt";
-
-            this.Dfsu1_gc_filename = modelresultdirinfo.FullName + @"\m21_gc.dfsu";
-            this.Dfsu2_tj_filenane = modelresultdirinfo.FullName + @"\m21_tj.dfsu";
 
             this.Progressinfo_filename = modelresultdirinfo.FullName + @"\progress.txt";
         }
@@ -243,8 +204,7 @@ namespace bjd_model
         {
             if(model_instance== "") model_instance = Mysql_GlobalVar.now_instance;
             string model_dir = Model_Const.Get_Sysdir() + @"\" + Model_Const.MODEL_DIRNAME + @"\" + model_instance + @"\" + plan_code;
-            string res_dir = File_Common.Get_SubDir(model_dir, ".dfsu");
-            if (res_dir == "") res_dir = File_Common.Get_SubDir(model_dir, ".res1d");
+            string res_dir = File_Common.Get_SubDir(model_dir, ".res1d");
             if (res_dir == "") res_dir = File_Common.Get_SubDir(model_dir, ".res11");
             string result_direct = model_dir + @"\" + "results";
             if (res_dir == "")

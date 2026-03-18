@@ -5,7 +5,6 @@ using System.Data;
 
 using bjd_model.Common;
 using bjd_model.Const_Global;
-using bjd_model.Mike21;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Kdbndp;
@@ -288,50 +287,11 @@ namespace bjd_model.Mike11
             return res;
         }
 
-        //更新故障闸站设置信息
+        //更新故障闸站设置信息（已移除二维模型支持）
         public static void Update_FaultGate_SetInfo(string model_name,string str_name,
             string fault_type, List<string> fault_gates, List<double> gate_h)
         {
-            string mike21_modelinstance = HydroModel.Get_Mike21_ModelInstance(model_name);
-            Dictionary<string, object> fault_baseinfo = FaultGate_BaseInfo.Read_StrGate_Info(mike21_modelinstance);
-            List<FaultGate_BaseInfo> gate_info = fault_baseinfo["gate_info"] as List<FaultGate_BaseInfo>;
-
-            Dictionary<string, object> fault_info = new Dictionary<string, object>();
-            fault_info.Add("gate_name", fault_baseinfo["cn_name"]);
-            fault_info.Add("fault_type", fault_type);
-
-            List<object[]> gate_h_list = new List<object[]>();
-            for (int i = 0; i < gate_info.Count; i++)
-            {
-                gate_h_list.Add(new object[] { $"{i+1}#闸门", gate_info[i].gate_h, gate_h[i]});
-            }
-            fault_info.Add("gate_h", gate_h_list);
-
-            //故障闸门经纬度
-            Dictionary<string, double[]> faultgate_jwd = new Dictionary<string, double[]>();
-            string fault_gate_desc = "";
-            for (int i = 0; i < fault_gates.Count; i++)
-            {
-                string fault_gate_id = fault_gates[i];
-                string fault_gate_name = "";double fault_gate_jd = 0; double fault_gate_wd = 0;
-                for (int j = 0; j < gate_info.Count; j++)
-                {
-                    if(gate_info[j].gate_code == fault_gate_id)
-                    {
-                        fault_gate_name = gate_info[j].gate_name;
-                        fault_gate_jd = gate_info[j].gate_jd;
-                        fault_gate_wd = gate_info[j].gate_wd;
-                    }
-                }
-
-                fault_gate_desc = i == 0? fault_gate_name: fault_gate_desc + "、" + fault_gate_name;
-                faultgate_jwd.Add(fault_gate_name, new double[] { fault_gate_jd, fault_gate_wd});
-            }
-            fault_info.Add("fault_gate", fault_gate_desc);
-            fault_info.Add("fault_gate_jwd", faultgate_jwd);
-
-            //更新数据库
-            Hd11.Update_ModelPara_DBInfo(model_name, "mike21_faultgate_info", File_Common.Serializer_Obj(fault_info));
+            return;
         }
 
         //获取故障闸站设置信息

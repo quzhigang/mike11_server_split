@@ -6,7 +6,7 @@ using System.Web;
 using System.Web.Script.Serialization;
 using bjd_model.Mike11;
 using bjd_model.Const_Global;
-using bjd_model.Mike21;
+
 using bjd_model.Common;
 using System.IO;
 using Newtonsoft.Json;
@@ -825,20 +825,10 @@ namespace bjd_model
         }
 
 
-        //获取故障闸门基础信息
+        //获取故障闸门基础信息（已移除二维模型支持）
         public string Get_FaultGate_BaseInfo(string business_code)
         {
-            //获取该业务模型包含的二维模型实例
-            string mike21_modelinstance = HydroModel.Get_Mike1121_ModelInstance(business_code, "mike21");
-            if (mike21_modelinstance == "") return null;
-
-            //从数据库获取故障闸门基础信息
-            Dictionary<string, object> faultgate = FaultGate_BaseInfo.Read_StrGate_Info(mike21_modelinstance);
-
-            //序列化
-            string _data = File_Common.Serializer_Obj(faultgate);
-
-            return _data;
+            return null;
         }
 
         //故障闸门设置

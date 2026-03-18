@@ -21,9 +21,7 @@ using System.Web.Script.Serialization;
 using bjd_model.Common;
 using bjd_model.CatchMent;
 using bjd_model.Const_Global;
-using bjd_model.Mike_Flood;
 using bjd_model.Mike11;
-using bjd_model.Mike21;
 using System.Net;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
@@ -276,45 +274,6 @@ namespace bjd_model
             }
 
             return res;
-        }
-
-        //根据业务模型ID获取里面包括的第1个Mike11或Mike21模型实例
-        public static string Get_Mike1121_ModelInstance(string business_code,string mike11_mike21)
-        {
-            if (business_code == "") return "";
-
-            //获取该业务模型包含的二维模型实例
-            Dictionary<string, List<string>> business_instance = HydroModel.Get_BusinessModel_ModelInstance_Relation();
-            if (!business_instance.Keys.Contains(business_code)) return "";
-            List<string> instances = business_instance[business_code];
-            string mike1121_model_instance = "";
-            for (int i = 0; i < instances.Count; i++)
-            {
-                if (instances[i].Contains("mike21"))
-                {
-                    mike1121_model_instance = instances[i];
-                    break;
-                }
-            }
-
-            return mike1121_model_instance;
-        }
-
-        //根据方案ID获取里面包括的第1个Mike11或Mike21模型实例
-        public static string Get_Mike21_ModelInstance(string plan_code)
-        {
-            List<string> instance_list = Get_Model_Instance_list(plan_code);
-            string mike21_model_instance = "";
-            for (int i = 0; i < instance_list.Count; i++)
-            {
-                if (instance_list[i].Contains("mike21"))
-                {
-                    mike21_model_instance = instance_list[i];
-                    break;
-                }
-            }
-
-            return mike21_model_instance;
         }
 
         //保存模型 -- 名字和提炼出来的进数据库，模型参数分散保存在模型文件中

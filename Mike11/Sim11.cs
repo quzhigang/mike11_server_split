@@ -15,8 +15,6 @@ using System.Runtime.InteropServices;
 using bjd_model.Common;
 using bjd_model.CatchMent;
 using bjd_model.Const_Global;
-using bjd_model.Mike_Flood;
-using bjd_model.Mike21;
 using bjd_model;
 using System.Globalization;
 using System.Timers;
@@ -70,13 +68,7 @@ namespace bjd_model.Mike11
     public enum EngineName
     {
         mike11,             //用于simulate一维模拟
-        Application,        //用于simulate一维模拟1D
-
-        FemEngineHDGPU,    //用于M21FM模型的双GPU计算
-        FemEngineHDGPUSP,   //用于M21FM模型的单精度GPU计算
-
-        FemEngineMFGPU,    //用于耦合模型的双GPU计算
-        FemEngineMFGPUSP   //用于耦合模型的单精度GPU计算
+        Application        //用于simulate一维模拟1D
     }
 
     // 五种模型选择情况
@@ -85,14 +77,9 @@ namespace bjd_model.Mike11
     {
         only_rr,        //mike11 RR 只选择降雨产汇流模型，计算各流域出口来流流量过程
         only_hd,       //mike11 hd 只选择河道水动力学模型,上边界条件采用入流过程，模拟河道上的洪水演进过程
-        
-        only_m21,       //mike21 hd 只进行二维水动力学模拟
-        ad_hd_m21,      //mike21 hd+ad 进行二维水动力学和水质模拟
 
         rr_and_hd,      //mike11 hd + rr 进行一维水动力学和产汇流模拟
-        ad_and_hd,       //mike11 hd + ad 进行一维水动力学和水质模拟
-
-        rr_hd_flood     //mike11 hd + rr + mike21 产汇流模型、河道一维水动力学模型、二维洪水淹没演进模型耦合运算
+        ad_and_hd       //mike11 hd + ad 进行一维水动力学和水质模拟
     }
 
 
@@ -264,7 +251,7 @@ namespace bjd_model.Mike11
             
             if (model_hd.GetParameter(1).ToBoolean() && model_rr.GetParameter(1).ToBoolean())
             {
-                GlobalPars.Select_model = CalculateModel.rr_and_hd; //有点问题，也可能是二维rr_hd_flood
+                GlobalPars.Select_model = CalculateModel.rr_and_hd;
             }
             else if (model_hd.GetParameter(1).ToBoolean() && model_ad.GetParameter(1).ToBoolean())
             {
@@ -343,7 +330,6 @@ namespace bjd_model.Mike11
 
             //获取用户前端选择的计算模型
             CalculateModel model = hydromodel.ModelGlobalPars.Select_model;
-            if (model == CalculateModel.only_m21) return;
 
             PFSFile sim11 = new PFSFile(sourcefilename, false);   //读取文件
             PFSSection target = sim11.GetTarget("Run11", 1);   //最外面的节
@@ -375,7 +361,6 @@ namespace bjd_model.Mike11
             //三种模型计算方式选择
             switch (model)
             {
-                case CalculateModel.only_m21:
                 case CalculateModel.only_rr:  //单独产汇流
                     model_hd.GetParameter(1).ModifyBoolParameter(false);
                     model_rr.GetParameter(1).ModifyBoolParameter(true);
@@ -400,7 +385,6 @@ namespace bjd_model.Mike11
                     inputrr.GetParameter(1).ModifyFileNameParameter("");
                     inputhd.GetParameter(1).ModifyFileNameParameter(input_filepath.HD);
                     break;
-                case CalculateModel.rr_hd_flood:
                 case CalculateModel.rr_and_hd:  //产汇流和河道水动力学耦合
                     model_hd.GetParameter(1).ModifyBoolParameter(true);
                     model_ad.GetParameter(1).ModifyBoolParameter(false);
@@ -422,7 +406,6 @@ namespace bjd_model.Mike11
                     inputrr.GetParameter(1).ModifyFileNameParameter(input_filepath.RR_Parameter);
                     inputhd.GetParameter(1).ModifyFileNameParameter(input_filepath.HD);
                     break;
-                case CalculateModel.ad_hd_m21:
                 case CalculateModel.ad_and_hd:  //水动力学、水质耦合
                     model_hd.GetParameter(1).ModifyBoolParameter(true);
                     model_ad.GetParameter(1).ModifyBoolParameter(true);
@@ -591,10 +574,6 @@ namespace bjd_model.Mike11
                 res_file = null;
                 return;
             }
-            else if (hydromodel.ModelGlobalPars.Select_model == CalculateModel.only_m21) //二维结果
-            {
-                res_file = hydromodel.Modelfiles.Dfsu1_gc_filename;
-            }
             else        //其他均为hd河道结果
             {
                 res_file = hydromodel.Modelfiles.Hdres11_filename;
@@ -627,7 +606,18 @@ namespace bjd_model.Mike11
         static extern int GetWindowText(IntPtr hWnd, StringBuilder lpText, int nCount);
 
         private const int WM_Close = 0x0010;
-        private const int WM_SETFOCUS = 0x0007; 
+        private const int WM_SETFOCUS = 0x0007;
+
+        [DllImport("user32.dll")]
+        static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+        private static void Key_Down_Up1(byte vk, int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                keybd_event(vk, 0, 0, UIntPtr.Zero);
+                keybd_event(vk, 0, 2, UIntPtr.Zero);
+            }
+        }
 
         //从结果文件中推求计算进度信息,将进度信息写入进度文本
         public static void Write_ProgressInfo_Totxt(HydroModel hydromodel, string sourcefilename)
@@ -679,7 +669,7 @@ namespace bjd_model.Mike11
                 {
                     //向窗体发送消息，设置窗体为焦点后，按N键取消
                     SendMessage(find_mikew, WM_SETFOCUS, IntPtr.Zero, IntPtr.Zero);
-                    Mdf.Key_Down_Up1(78, 1);
+                    Key_Down_Up1(78, 1);
                 }
 
                 //再判断一次
@@ -780,17 +770,8 @@ namespace bjd_model.Mike11
             savestep_count = 1;
             single_stepb = 0;
             TimeSpan simulatespan = hydromodel.ModelGlobalPars.Simulate_time.End.Subtract(hydromodel.ModelGlobalPars.Simulate_time.Begin);
-            if (hydromodel.ModelGlobalPars.Select_model == CalculateModel.only_m21)  //仅仅m21
-            {
-                //总保存步数
-                double singlestepminutes = (double)hydromodel.Mike21Pars.Mike21_savetimestepbs * (double)hydromodel.ModelGlobalPars.Simulate_timestep / 60.0;
-                savestep_count = (int)(simulatespan.TotalMinutes / singlestepminutes);
 
-                //获取单步保存大小
-                int mesh_count = hydromodel.Mike21Pars.MeshParsList.Elementcount;
-                single_stepb = mesh_count * 5 * 4;   //dfsu静态网格数据量为网格量的38.5倍,固定按输出5项
-            }
-            else   //m11、m11+rr、m11+rr+m21
+            //m11、m11+rr
             {
                 //总保存步数
                 savestep_count = (int)(simulatespan.TotalMinutes / (double)hydromodel.Mike11Pars.Mike11_savetimestep);
@@ -811,18 +792,7 @@ namespace bjd_model.Mike11
         public static string Get_EngineName(HydroModel hydromodel)
         {
             string engine_name;
-            if (hydromodel.ModelGlobalPars.Select_model == CalculateModel.rr_hd_flood)
-            {
-                engine_name = EngineName.FemEngineMFGPUSP.ToString();  //适合Flood的单精度GPU计算
-            }
-            else if (hydromodel.ModelGlobalPars.Select_model == CalculateModel.only_m21)
-            {
-                engine_name = EngineName.FemEngineHDGPUSP.ToString();  //适合mike21的单精度GPU计算
-            }
-            else
-            {
-                engine_name = "DHI.Mike1D.Application"; // EngineName.mike11.ToString();   //单独非XAJ产汇流、一维河道以及两者耦合
-            }
+            engine_name = "DHI.Mike1D.Application"; // EngineName.mike11.ToString();   //单独非XAJ产汇流、一维河道以及两者耦合
             return engine_name;
         }
 
@@ -906,18 +876,7 @@ namespace bjd_model.Mike11
 
                 //如果模拟引擎退出了，则循环退出
                 string engine_name;
-                if (hydromodel.ModelGlobalPars.Select_model == CalculateModel.rr_hd_flood)
-                {
-                    engine_name = EngineName.FemEngineMFGPUSP.ToString();  //适合Flood的单精度GPU计算
-                }
-                else if (hydromodel.ModelGlobalPars.Select_model == CalculateModel.only_m21)
-                {
-                    engine_name = EngineName.FemEngineHDGPUSP.ToString();  //适合mike21的单精度GPU计算
-                }
-                else
-                {
-                    engine_name = EngineName.mike11.ToString();   //单独非XAJ产汇流、一维河道以及两者耦合
-                }
+                engine_name = EngineName.mike11.ToString();   //单独非XAJ产汇流、一维河道以及两者耦合
 
                 Process[] pros = Process.GetProcessesByName(engine_name);
 

@@ -5,7 +5,6 @@ using System.Data;
 
 using bjd_model.Common;
 using bjd_model.Const_Global;
-using bjd_model.Mike21;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Kdbndp;

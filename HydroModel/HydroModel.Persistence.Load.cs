@@ -21,9 +21,7 @@ using System.Web.Script.Serialization;
 using bjd_model.Common;
 using bjd_model.CatchMent;
 using bjd_model.Const_Global;
-using bjd_model.Mike_Flood;
 using bjd_model.Mike11;
-using bjd_model.Mike21;
 using System.Net;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
@@ -74,8 +72,7 @@ namespace bjd_model
             if (model.RfPars.Catchmentlist.Catchment_infolist != null &&
                 CatchmentList.Stand24_Rfmodel == null &&
                 (model.ModelGlobalPars.Select_model == CalculateModel.only_rr ||
-                model.ModelGlobalPars.Select_model == CalculateModel.rr_and_hd ||
-                model.ModelGlobalPars.Select_model == CalculateModel.rr_hd_flood))
+                model.ModelGlobalPars.Select_model == CalculateModel.rr_and_hd))
             {
                 RR11.GetDefault_AverageRF();             //流域各月平均降雨
                 RR11.GetDefault_AverageEvp();           //流域各月平均蒸发
@@ -174,8 +171,7 @@ namespace bjd_model
             if (model.RfPars.Catchmentlist.Catchment_infolist != null &&
                 CatchmentList.Stand24_Rfmodel == null &&
                 (model.ModelGlobalPars.Select_model == CalculateModel.only_rr ||
-                model.ModelGlobalPars.Select_model == CalculateModel.rr_and_hd ||
-                model.ModelGlobalPars.Select_model == CalculateModel.rr_hd_flood))
+                model.ModelGlobalPars.Select_model == CalculateModel.rr_and_hd))
             {
                 RR11.GetDefault_AverageRF();             //流域各月平均降雨
                 RR11.GetDefault_AverageEvp();           //流域各月平均蒸发
@@ -215,17 +211,7 @@ namespace bjd_model
 
         public static void Set_NowItem_SaveMinutes(HydroModel default_model)
         {
-            if (default_model.ModelGlobalPars.Select_model == CalculateModel.rr_hd_flood)
-            {
-                //藕合模型也用二维模型
-                Model_Const.Now_Model_SaveTime = (int)default_model.Mike21Pars.Mike21_savetimestepbs * (int)default_model.ModelGlobalPars.Simulate_timestep;
-            }
-            else if (default_model.ModelGlobalPars.Select_model == CalculateModel.only_m21 || default_model.ModelGlobalPars.Select_model == CalculateModel.ad_hd_m21)
-            {
-                //二维模型
-                Model_Const.Now_Model_SaveTime = (int)default_model.Mike21Pars.Mike21_savetimestepbs * (int)default_model.ModelGlobalPars.Simulate_timestep;
-            }
-            else if (default_model.ModelGlobalPars.Select_model == CalculateModel.only_hd || default_model.ModelGlobalPars.Select_model == CalculateModel.ad_and_hd)
+            if (default_model.ModelGlobalPars.Select_model == CalculateModel.only_hd || default_model.ModelGlobalPars.Select_model == CalculateModel.ad_and_hd)
             {
                 //一维模型(注意，需要保存的是分钟)
                 Model_Const.Now_Model_SaveTime = (int)default_model.Mike11Pars.Mike11_savetimestep;

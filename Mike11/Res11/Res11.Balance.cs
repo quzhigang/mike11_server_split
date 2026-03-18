@@ -15,8 +15,7 @@ using Kdbndp;
 using bjd_model.Common;
 using bjd_model.CatchMent;
 using bjd_model.Const_Global;
-using bjd_model.Mike_Flood;
-using bjd_model.Mike21;
+
 using bjd_model;
 using System.Diagnostics;
 using System.Data;
@@ -34,7 +33,7 @@ namespace bjd_model.Mike11
     public partial class Res11
     {
         #region ******************* 从结果html文件中获取统计水量 *******************
-        //一维河道或二维网格水量统计结果读取
+        //一维河道水量统计结果读取
         public static water_volume_balance Htmlreader(HydroModel hydromodel, Mike11_Mike21 mike11_mike21)
         {
             //先初始化
@@ -42,25 +41,12 @@ namespace bjd_model.Mike11
 
             //获取平衡文件
             string sourcefilename = null;
-            if (mike11_mike21 == Mike11_Mike21.mike11)
+            sourcefilename = Path.GetDirectoryName(hydromodel.Modelfiles.Simulate_filename) + @"\" +
+                                    Path.GetFileNameWithoutExtension(hydromodel.Modelfiles.Simulate_filename) + "VolumeBalance.HTML";
+            if (!File.Exists(sourcefilename))
             {
-                sourcefilename = Path.GetDirectoryName(hydromodel.Modelfiles.Simulate_filename) + @"\" +
-                                        Path.GetFileNameWithoutExtension(hydromodel.Modelfiles.Simulate_filename) + "VolumeBalance.HTML";
-                if (!File.Exists(sourcefilename))
-                {
-                    Console.WriteLine("未找到一维平衡结果文件！");
-                    return waterv;
-                }
-            }
-            else
-            {
-                sourcefilename = Path.GetDirectoryName(hydromodel.Modelfiles.Simulate_filename) + @"\" +
-                    Path.GetFileNameWithoutExtension(hydromodel.Modelfiles.M21fm_filename) + "VolumeBalance.html";
-                if (!File.Exists(sourcefilename))
-                {
-                    Console.WriteLine("未找到二维平衡结果文件！");
-                    return waterv;
-                }
+                Console.WriteLine("未找到一维平衡结果文件！");
+                return waterv;
             }
 
             //逐行读取文件，生成字符串数组，定义一些判断字符串
