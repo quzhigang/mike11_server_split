@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,539 +15,6 @@ using bjd_model.Mike11;
 
 namespace bjd_model.CatchMent
 {
-
-    public class BasForeCastData
-    {
-        public string reservoirCode = "bab0b0a0001";
-        public FloodNo[] floodNo;
-        public EvapCode[] evapCode;
-
-        public void setReservoirCode(string reservoirCode)
-        {
-            this.reservoirCode = reservoirCode;
-        }
-        public string getReservoirCode()
-        {
-            return reservoirCode;
-        }
-        public void setNum(int n)
-        {
-
-            floodNo = new FloodNo[n];
-        }
-        public void setEvapNum(int n)
-        {
-
-            evapCode = new EvapCode[n];
-        }
-    }
-
-    public class BasForeCastDataPOJO
-    {
-        public BasForeCastData getFloodNo(Xaj xaj)
-        {
-            BasForeCastData bfcd = new BasForeCastData();
-
-            string[] floodno = new string[] { "洪水过程" };
-            List<DateTime> rain_dt = new List<DateTime>(xaj.Step_P.Keys);
-
-            string s_begin = rain_dt[0].ToString("yyyy-MM-dd HH:mm:ss");
-            Date dateBegin = String_Date.StringToDate(s_begin);
-            string s_end = rain_dt[rain_dt.Count - 1].ToString("yyyy-MM-dd HH:mm:ss");
-            Date dateEnd = String_Date.StringToDate(s_end);
-            bfcd.setNum(1);
-            for (int i = 0; i < bfcd.floodNo.Length; i++)
-            {
-                bfcd.floodNo[i] = new FloodNo();
-                bfcd.floodNo[i].floodno = floodno[i];
-                bfcd.floodNo[i].rainbeg = dateBegin;
-                bfcd.floodNo[i].raindt = dateEnd;
-            }
-
-            return bfcd;
-        }
-    }
-
-    public class RainCode
-    {
-        public string rainCode;
-        public string rainName;
-        public float rainWeight;
-        public string idLocation;
-        public int n;
-        public DayRainOff[] dayRainOff;
-        public Date[] p_step_dt;
-        public float[] p_step;
-        public Date[] p_day_dt;
-        public float[] p_day;
-        public float[] q_step;
-        public Date[] q_step_dt;
-
-        public void setStepRainNum(int n)
-        {
-            p_step_dt = new Date[n];
-            p_step = new float[n];
-        }
-
-        public void setStepQNum(int n)
-        {
-            q_step = new float[n];
-            q_step_dt = new Date[n];
-        }
-
-        public void setDayNum(int n)
-        {
-            p_day = new float[n];
-            p_day_dt = new Date[n];
-        }
-
-        public void setRainCode(string rainCode)
-        {
-            this.rainCode = rainCode;
-        }
-        public string getRainCode()
-        {
-            return rainCode;
-        }
-
-        public void setRainName(string rainName)
-        {
-            this.rainName = rainName;
-        }
-        public string getRainName()
-        {
-            return rainName;
-        }
-
-        public void setRainWeight(float rainWeight)
-        {
-            this.rainWeight = rainWeight;
-        }
-        public float getRainWeight()
-        {
-            return rainWeight;
-        }
-
-        public void setIdLocation(string idLocation)
-        {
-            this.idLocation = idLocation;
-        }
-        public string getIdLocation()
-        {
-            return idLocation;
-        }
-
-        public void setN(int n)
-        {
-            this.n = n;
-        }
-        public int getN()
-        {
-            return n;
-        }
-    }
-
-    public class RainCodePOJO
-    {
-        public RainCode[][][] getRainOff(Xaj xaj)
-        {
-            BasForeCastData bfcd;
-            BasForeCastDataPOJO bfcdpojo = new BasForeCastDataPOJO();
-            bfcd = bfcdpojo.getFloodNo(xaj);
-
-            FloodNo[] fn;
-            FloodNoPOJO fnpojo = new FloodNoPOJO();
-            fn = fnpojo.getUnitCode(xaj);
-
-            UnitCode[][] uc;
-            UnitCodePOJO ucpojo = new UnitCodePOJO();
-            uc = ucpojo.getRainCode(xaj);
-
-            RainCode[][][] rc;
-            rc = new RainCode[bfcd.floodNo.Length][][];
-
-            CommonFun cf = new CommonFun();
-            int a, b, c;
-            for (a = 0; a < bfcd.floodNo.Length; a++)  //循环场次洪水
-            {
-
-                rc[a] = new RainCode[fn[a].unitCode.Length][];
-
-                for (b = 0; b < fn[a].unitCode.Length; b++)  //单元区域
-                {
-
-                    rc[a][b] = new RainCode[uc[a][b].rainCode.Length];
-
-                    for (c = 0; c < uc[a][b].rainCode.Length; c++)
-                    {
-                        //循环每个预报单元的雨量站
-                        rc[a][b][c] = new RainCode();
-                        // 提取时段雨量
-
-                        List<DateTime> p_step_dt = new List<DateTime>(xaj.Step_P.Keys);
-                        List<DateTime> p_day_dt = new List<DateTime>(xaj.Day_P.Keys);
-
-                        rc[a][b][c].setStepRainNum(p_step_dt.Count);
-                        rc[a][b][c].setDayNum(p_day_dt.Count);
-
-                        for (int d = 0; d < p_step_dt.Count; d++)
-                        {
-                            string s_time = p_step_dt[d].ToString("yyyy-MM-dd HH:mm:ss");
-                            Date date = String_Date.StringToDate(s_time);
-                            rc[a][b][c].p_step_dt[d] = date;
-                            rc[a][b][c].p_step[d] = (float)xaj.Step_P[p_step_dt[d]];
-
-                        }
-
-                        for (int i = 0; i < p_day_dt.Count; i++)
-                        {
-                            string s_time = p_day_dt[i].ToString("yyyy-MM-dd HH:mm:ss");
-                            Date date = String_Date.StringToDate(s_time);
-                            rc[a][b][c].p_day_dt[i] = date;
-                            rc[a][b][c].p_day[i] = (float)xaj.Day_P[p_day_dt[i]];
-
-                        }
-
-                    }
-
-                }
-
-            }
-            return rc;
-        }
-    }
-
-    public class EvapCode
-    {
-        public string evapCode;
-        public Date[] dt;
-        public float[] em;
-        public Date[] dt_ave;
-        public float[] em_ave;
-
-        public void setNum(int n)
-        {
-            dt = new Date[n];
-            em = new float[n];
-        }
-
-        public void setAveNum(int n)
-        {
-            dt_ave = new Date[n];
-            em_ave = new float[n];
-        }
-
-        public void setEvapCode(string evapCode)
-        {
-            this.evapCode = evapCode;
-        }
-        public string getEvapCode()
-        {
-            return evapCode;
-        }
-
-        public void setDt(Date[] dt)
-        {
-            this.dt = dt;
-        }
-        public Date[] getDt()
-        {
-            return dt;
-        }
-
-        public void setEm(float[] em)
-        {
-            this.em = em;
-        }
-        public float[] getEm()
-        {
-            return em;
-        }
-    }
-
-    public class EvapCodePOJO
-    {
-        public EvapCode[] getEvap(Xaj xaj)
-        {
-            Vector vec1;
-            EvapCode[] ec;
-            BasForeCastData bfcd;
-
-            BasForeCastDataPOJO bfcdpojo = new BasForeCastDataPOJO();
-            bfcd = bfcdpojo.getFloodNo(xaj);
-
-            List<DateTime> day_em_dt = new List<DateTime>(xaj.Day_em.Keys);
-
-            Date[] dt = new Date[day_em_dt.Count];
-            for (int i = 0; i < day_em_dt.Count; i++)
-            {
-                string s_time = day_em_dt[i].ToString("yyyy-MM-dd HH:mm:ss");
-                Date date = String_Date.StringToDate(s_time);
-                dt[i] = date;
-            }
-            float[] em = new float[day_em_dt.Count];
-
-            for (int i = 0; i < day_em_dt.Count; i++)
-            {
-                em[i] = (float)xaj.Day_em[day_em_dt[i]];//**********
-            }
-
-            bfcd.setEvapNum(1);
-            ec = new EvapCode[1];
-
-            DayToAve dta = new DayToAve();
-
-            for (int i = 0; i < bfcd.evapCode.Length; i++)
-            {
-                ec[i] = new EvapCode();
-                ec[i].setNum(day_em_dt.Count);
-                ec[i].dt = dt;
-                ec[i].em = em;
-
-                vec1 = dta.dayToAve(em, dt);
-                ec[i].dt_ave = (Date[])vec1.get(0);
-                ec[i].em_ave = (float[])vec1.get(1);
-            }
-            return ec;
-        }
-    }
-
-    public class FloodNo
-    {
-        public string floodno;//洪号
-        public Date rainbeg;
-        public Date raindt;
-        public float sum_p;
-        public Date flowdt;
-        public float flowmax;
-        public float R;
-        public float qrainbeg;
-        public float[] Q;
-        public float[] Q1;
-        public Date[] dt_Q;
-        public Date[] dt_Q1;
-        public float[] Q2;
-        public Date[] dt_Q2;
-
-        public UnitCode[] unitCode;
-
-        public void setNum(int n)
-        {
-            unitCode = new UnitCode[n];
-        }
-
-        public void setQ(int n)
-        {
-            Q = new float[n];
-            dt_Q = new Date[n];
-            Q1 = new float[n];
-            dt_Q1 = new Date[n];
-            Q2 = new float[n];
-            dt_Q2 = new Date[n];
-
-        }
-        public void setFloodno(string floodno)
-        {
-            floodno = this.floodno;
-        }
-        public string getFloodNo()
-        {
-            return this.floodno;
-        }
-
-        public void setRainBeg(Date rainbeg)
-        {
-            rainbeg = this.rainbeg;
-        }
-        public Date getRainBeg()
-        {
-            return this.rainbeg;
-        }
-
-        public void setRainDt(Date raindt)
-        {
-            raindt = this.raindt;
-        }
-        public Date getRainDt()
-        {
-            return this.raindt;
-        }
-
-        public void setSum_p(float sum_p)
-        {
-            sum_p = this.sum_p;
-        }
-        public float getSum_p()
-        {
-            return this.sum_p;
-        }
-
-        public void setFlowDt(Date flowdt)
-        {
-            flowdt = this.flowdt;
-        }
-        public Date getFlowDt()
-        {
-            return this.flowdt;
-        }
-
-        public void setFlowMax(float flowmax)
-        {
-            flowmax = this.flowmax;
-        }
-        public float getFlowMax()
-        {
-            return this.flowmax;
-        }
-
-        public void setR(float R)
-        {
-            R = this.R;
-        }
-        public float getR()
-        {
-            return this.R;
-        }
-
-        public void QrainBeg(float qrainbeg)
-        {
-            qrainbeg = this.qrainbeg;
-        }
-        public float getQrainBeg()
-        {
-            return this.qrainbeg;
-        }
-    }
-
-    public class FloodNoPOJO
-    {
-        public FloodNo[] getUnitCode(Xaj xaj)
-        {
-            BasForeCastData bfcd;
-            BasForeCastDataPOJO bfcdpojo = new BasForeCastDataPOJO();
-            bfcd = bfcdpojo.getFloodNo(xaj);
-            FloodNo[] fn = new FloodNo[bfcd.floodNo.Length];
-
-            for (int a = 0; a < bfcd.floodNo.Length; a++)
-            {
-                string[] unitCode = new string[] { "uces01" };
-                float[] unitWeight = new float[] { 1 };
-
-                fn[a] = new FloodNo();
-                fn[a].setNum(unitCode.Length);
-
-                for (int i = 0; i < fn[a].unitCode.Length; i++)
-                {
-                    fn[a].unitCode[i] = new UnitCode();
-                    fn[a].unitCode[i].unitCode = unitCode[i];
-                    fn[a].unitCode[i].unitWeight = unitWeight[i];
-                }
-            }
-            return fn;
-        }
-    }
-
-    public class UnitCode
-    {
-        public string unitCode;//单元代吗
-        public string unitName;//单元名称（冰峪沟单元）
-        public float unitWeight;//单元权重
-        public float routWay;//演进方法代码
-        public float routTime;//传播时间
-        public RainCode[] rainCode;
-
-        public void setNum(int n)
-        {
-            rainCode = new RainCode[n];
-        }
-
-        public void setUnitCode(string unitCode)
-        {
-            unitCode = this.unitCode;
-        }
-        public string getUnitCode()
-        {
-            return this.unitCode;
-        }
-
-        public void setUnitName(string unitName)
-        {
-            unitName = this.unitName;
-        }
-        public string getUnitName()
-        {
-            return this.unitName;
-        }
-
-        public void setUnitWeight(float unitWeight)
-        {
-            unitWeight = this.unitWeight;
-        }
-        public float getUnitWeight()
-        {
-            return this.unitWeight;
-        }
-
-        public void setRoutWay(float routWay)
-        {
-            routWay = this.routWay;
-        }
-        public float getRoutWay()
-        {
-            return this.routWay;
-        }
-        public void setRoutTime(float routTime)
-        {
-            routTime = this.routTime;
-        }
-        public float getRoutTime()
-        {
-            return this.routTime;
-        }
-    }
-
-    public class UnitCodePOJO
-    {
-        public UnitCode[][] getRainCode(Xaj xaj)
-        {
-            BasForeCastData bfcd;
-            BasForeCastDataPOJO bfcdpojo = new BasForeCastDataPOJO();
-            bfcd = bfcdpojo.getFloodNo(xaj);
-
-            FloodNo[] fn;
-            FloodNoPOJO fnpojo = new FloodNoPOJO();
-            fn = fnpojo.getUnitCode(xaj);
-
-            UnitCode[][] uc = new UnitCode[bfcd.floodNo.Length][];
-
-            for (int a = 0; a < bfcd.floodNo.Length; a++)  //循环场次洪水
-            {
-
-                uc[a] = new UnitCode[fn[a].unitCode.Length];
-
-                for (int b = 0; b < fn[a].unitCode.Length; b++)  //循环单元
-                {
-                    string[] rainCode = new string[] { "rainces001" };  //面雨量，看做只有一个雨量站
-                    float[] rainWeight = new float[] { 1 };  //权重为1
-                    string[] rainName = new string[rainCode.Length];
-                    uc[a][b] = new UnitCode();
-                    uc[a][b].setNum(rainCode.Length);
-
-                    for (int i = 0; i < uc[a][b].rainCode.Length; i++)  //循环雨量站
-                    {
-
-                        Vector v;
-                        uc[a][b].rainCode[i] = new RainCode();
-                        uc[a][b].rainCode[i].rainCode = rainCode[i];
-                        uc[a][b].rainCode[i].rainWeight = rainWeight[i];
-                        uc[a][b].rainCode[i].n = rainCode.Length;
-                    }
-                }
-            }
-            return uc;
-        }
-    }
-
     public class FloodForecast
     {
         public static BasForeCastData bfcd;
@@ -569,19 +36,19 @@ namespace bjd_model.CatchMent
             uc = ucpojo.getRainCode(xaj);
 
             RainCodePOJO rcpojo = new RainCodePOJO();
-            rc = rcpojo.getRainOff(xaj);		//时段降雨过程和日降雨过程
+            rc = rcpojo.getRainOff(xaj);		//鏃舵闄嶉洦杩囩▼鍜屾棩闄嶉洦杩囩▼
 
             EvapCodePOJO ecpojo = new EvapCodePOJO();
-            ec = ecpojo.getEvap(xaj);           //日蒸发以及时段蒸发
+            ec = ecpojo.getEvap(xaj);           //鏃ヨ捀鍙戜互鍙婃椂娈佃捀鍙?
 
         }
 
-        // 洪水预报
+        // 娲按棰勬姤
         public static Dictionary<DateTime, double> Forecast(Xaj xaj)
         {
             Dictionary<DateTime, double> resultdic = new Dictionary<DateTime, double>();
 
-            Console.WriteLine("新安江模型开始运行......");
+            Console.WriteLine("鏂板畨姹熸ā鍨嬪紑濮嬭繍琛?.....");
 
             FloodForecast bfd = new FloodForecast();
             bfd.getBaseData(xaj);
@@ -599,15 +66,15 @@ namespace bjd_model.CatchMent
             para[12] = xajParam.Cs; para[13] = xajParam.L;
             para[14] = xajParam.Cr;
 
-            float ua0_day = (float)xaj.XajInitial.ua_day;// /上层土壤初始含水量
-            float la0_day = (float)xaj.XajInitial.la_day;// /下层土壤初始含水量
-            float da0_day = (float)xaj.XajInitial.da_day;// /深层土壤初始含水量
-            float baseFlow = (float)xaj.XajInitial.baseFlow;//基流
+            float ua0_day = (float)xaj.XajInitial.ua_day;// /涓婂眰鍦熷￥鍒濆鍚按閲?
+            float la0_day = (float)xaj.XajInitial.la_day;// /涓嬪眰鍦熷￥鍒濆鍚按閲?
+            float da0_day = (float)xaj.XajInitial.da_day;// /娣卞眰鍦熷￥鍒濆鍚按閲?
+            float baseFlow = (float)xaj.XajInitial.baseFlow;//鍩烘祦
             vec = dltx.getOneFitness(bfcd, fn, uc, rc, ec, para, dltx, ua0_day, la0_day, da0_day, baseFlow);
             oneSessionTotalFlood = (float[][])vec.get(0);
             Vector flood_dt = (Vector)vec.get(1);
 
-            /**************转换洪水过程数据************/
+            /**************杞崲娲按杩囩▼鏁版嵁************/
             for (int k = 0; k < bfcd.floodNo.Length; k++)
             {
                 for (int m = 0; m < oneSessionTotalFlood[k].Length; m++)
@@ -637,7 +104,7 @@ namespace bjd_model.CatchMent
         public Vector xajParaTran(BasForeCastData bfcd, FloodNo[] fn, UnitCode[][] uc,
                 RainCode[][][] rc, EvapCode[] ec, float[] para, float ua0_day, float la0_day, float da0_day, float baseFlow)
         {
-            // 该方法运行太慢
+            // 璇ユ柟娉曡繍琛屽お鎱?
             Vector vec = new Vector();
             Vector vec0, vec1, vec2, vec3, vec4, vec5;
             float[][] oneSessionTotalFlood = new float[bfcd.floodNo.Length][];
@@ -648,7 +115,7 @@ namespace bjd_model.CatchMent
             CommonFun cf = new CommonFun();
             GetEm ge = new GetEm();
             Vector flood_dt = new Vector();
-            for (int i = 0; i < bfcd.floodNo.Length; i++)  //循环不同场次洪水
+            for (int i = 0; i < bfcd.floodNo.Length; i++)  //寰幆涓嶅悓鍦烘娲按
             {
                 //System.out.println("**** "+i);
                 float[] unitWeighth = new float[fn[i].unitCode.Length];
@@ -666,23 +133,23 @@ namespace bjd_model.CatchMent
                 float[][] aveStep_p = new float[fn[i].unitCode.Length][];
 
                 vec1 = ge.getDay_em(ec[0].em, ec[0].dt, String_Date.DateToString(ec[0].dt[0]),
-                        String_Date.DateToString(ec[0].dt[ec[0].dt.Length - 1]));  // 取得日蒸发数据     //2016-11-03写：前期日蒸发直接给定的，选取开始日期和结束日期截取日蒸发
+                        String_Date.DateToString(ec[0].dt[ec[0].dt.Length - 1]));  // 鍙栧緱鏃ヨ捀鍙戞暟鎹?    //2016-11-03鍐欙細鍓嶆湡鏃ヨ捀鍙戠洿鎺ョ粰瀹氱殑锛岄€夊彇寮€濮嬫棩鏈熷拰缁撴潫鏃ユ湡鎴彇鏃ヨ捀鍙?
                 Date[] day_dt = (Date[])vec1.get(0);
                 float[] day_em = (float[])vec1.get(1);
 
 
                 for (int j = 0; j < fn[i].unitCode.Length; j++)
-                {//循环不同单元,
+                {//寰幆涓嶅悓鍗曞厓,
                     unitWeighth[j] = fn[i].unitCode[j].unitWeight;
                     day_p = new float[uc[i][j].rainCode.Length][];
                     step_p = new float[uc[i][j].rainCode.Length][];
                     rainWeight = new float[uc[i][j].rainCode.Length];
-                    float areaUnit = fn[i].unitCode[j].unitWeight * area;   ///原来是692，改为260
+                    float areaUnit = fn[i].unitCode[j].unitWeight * area;   ///鍘熸潵鏄?92锛屾敼涓?60
                     for (int k = 0; k < uc[i][j].rainCode.Length; k++)
-                    {   //循环每个预报单元里面的雨量站	
+                    {   //寰幆姣忎釜棰勬姤鍗曞厓閲岄潰鐨勯洦閲忕珯	
                         rainWeight[k] = uc[i][j].rainCode[k].rainWeight;
                         step_p[k] = new float[rc[i][j][0].p_step.Length];
-                        day_p[k] = rc[i][j][k].p_day;  //每一场次每个单元中每个雨量站的日降雨
+                        day_p[k] = rc[i][j][k].p_day;  //姣忎竴鍦烘姣忎釜鍗曞厓涓瘡涓洦閲忕珯鐨勬棩闄嶉洦
                         for (int a = 0; a < rc[i][j][k].p_step.Length; a++)
                         {
                             if (a < rc[i][j][k].p_step.Length)
@@ -696,15 +163,15 @@ namespace bjd_model.CatchMent
                         }
                     }
                     vec4 = XajModel.getAveValue(day_p, rainWeight);
-                    aveDay_p[j] = (float[])vec4.get(0);  // 得到平均日降雨
+                    aveDay_p[j] = (float[])vec4.get(0);  // 寰楀埌骞冲潎鏃ラ檷闆?
 
-                    vec5 = XajModel.getAveValue(step_p, rainWeight);///时段雨量				
-                    aveStep_p[j] = (float[])vec5.get(0);///时段雨量
+                    vec5 = XajModel.getAveValue(step_p, rainWeight);///鏃舵闆ㄩ噺				
+                    aveStep_p[j] = (float[])vec5.get(0);///鏃舵闆ㄩ噺
 
                     vec0 = XajModel.getOneUnitFloodArray(aveDay_p[j], day_em, aveStep_p[j],
                              step_em, areaUnit, para, fn[i].unitCode.Length, unitWeighth, ua0_day, la0_day, da0_day, baseFlow, String_Date.DateToString(bfcd.floodNo[i].rainbeg));
 
-                    oneUnitFlood[j] = (float[])vec0.get(0);    // 每一个雨量站子单元的演进4  
+                    oneUnitFlood[j] = (float[])vec0.get(0);    // 姣忎竴涓洦閲忕珯瀛愬崟鍏冪殑婕旇繘4  
                     flood_dt = (Vector)vec0.get(1);
 
 
@@ -715,7 +182,7 @@ namespace bjd_model.CatchMent
                 oneSessionTotalFlood[i] = (float[])vec3.get(0);
 
 
-            }  // 场次循环结束
+            }  // 鍦烘寰幆缁撴潫
 
             vec.add(oneSessionTotalFlood);  // 0
 
@@ -738,18 +205,18 @@ namespace bjd_model.CatchMent
             float[][] oneSessionTotalFlood = (float[][])vec0.get(0);
             Vector flood_dt = (Vector)vec0.get(1);
 
-            float[] totalFlow0 = new float[bfcd.floodNo.Length];///真实流量总和
-            float[] totalFlowf = new float[bfcd.floodNo.Length];///模拟流量总和
+            float[] totalFlow0 = new float[bfcd.floodNo.Length];///鐪熷疄娴侀噺鎬诲拰
+            float[] totalFlowf = new float[bfcd.floodNo.Length];///妯℃嫙娴侀噺鎬诲拰
             float[] totalRf = new float[bfcd.floodNo.Length];
-            float[] absR = new float[bfcd.floodNo.Length];   ///R绝对误差
-            float[] relaR = new float[bfcd.floodNo.Length];  ///R相对误差
-            float[] R0 = new float[bfcd.floodNo.Length];///实测R
-            float[] Rf = new float[bfcd.floodNo.Length];///预报R
+            float[] absR = new float[bfcd.floodNo.Length];   ///R缁濆璇樊
+            float[] relaR = new float[bfcd.floodNo.Length];  ///R鐩稿璇樊
+            float[] R0 = new float[bfcd.floodNo.Length];///瀹炴祴R
+            float[] Rf = new float[bfcd.floodNo.Length];///棰勬姤R
 
             float[] passNum = new float[bfcd.floodNo.Length];
             float totalPassNum = 0;
-            float[] sum_p = new float[bfcd.floodNo.Length];///降雨量
-            float[] aerfa0 = new float[bfcd.floodNo.Length];/// 实测产流系数 aerfa0
+            float[] sum_p = new float[bfcd.floodNo.Length];///闄嶉洦閲?
+            float[] aerfa0 = new float[bfcd.floodNo.Length];/// 瀹炴祴浜ф祦绯绘暟 aerfa0
             float[] aerfaf = new float[bfcd.floodNo.Length];
             float[] maxQ0 = new float[bfcd.floodNo.Length];
             float[] absMaxQ = new float[bfcd.floodNo.Length];
@@ -757,14 +224,14 @@ namespace bjd_model.CatchMent
 
             int[] numMaxQ0 = new int[bfcd.floodNo.Length];
             Date[] dateMaxQ0 = new Date[bfcd.floodNo.Length];
-            int[] absNumMaxQ = new int[bfcd.floodNo.Length];///峰现绝对误差
+            int[] absNumMaxQ = new int[bfcd.floodNo.Length];///宄扮幇缁濆璇樊
 
 
-            float[] nash = new float[bfcd.floodNo.Length];///确定性系数
-            float[] sum_a1 = new float[bfcd.floodNo.Length];///用来计算确定性系数
-            float[] sum_b1 = new float[bfcd.floodNo.Length];///用来计算确定性系数
+            float[] nash = new float[bfcd.floodNo.Length];///纭畾鎬х郴鏁?
+            float[] sum_a1 = new float[bfcd.floodNo.Length];///鐢ㄦ潵璁＄畻纭畾鎬х郴鏁?
+            float[] sum_b1 = new float[bfcd.floodNo.Length];///鐢ㄦ潵璁＄畻纭畾鎬х郴鏁?
 
-            float[] maxQf = new float[bfcd.floodNo.Length];   ///预报流量峰值，guokelun
+            float[] maxQf = new float[bfcd.floodNo.Length];   ///棰勬姤娴侀噺宄板€硷紝guokelun
 
 
             fitness = totalPassNum;
@@ -810,131 +277,25 @@ namespace bjd_model.CatchMent
         }
     }
 
-    class DayToAve
-    {
-        public Vector dayToAve(float[] day_em, Date[] day_dt)
-        {
-            int hour_number = ((int)(24 / Model_Const.XAJ_TIMESTEP_HOUR));
-            Vector vec = new Vector();
-            CommonFun cf = new CommonFun();
-            Calendar cal = Calendar.getInstance();
-            int n = day_em.Length * hour_number; ///步长为1小时*********************************************************
-            float[] ave_em = new float[n];
-            Date[] ave_dt = new Date[n];
-            int i;
-            int j;
-            for (i = 0; i < day_em.Length; i++)
-            {
-                cal.setTime(day_dt[i]);
-                /***********************时段为1小时*****************************/
-                for (j = 0; j < hour_number; j++)
-                {
-                    ave_em[i * hour_number + j] = day_em[i] / hour_number;
-                    ave_dt[i * hour_number + j] = CommonFun.getDT(day_dt[i], cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), j);
-                }
-                /***********************时段为1小时*****************************/
-            }
-            vec.addElement(ave_dt);
-            vec.addElement(ave_em);
-            return vec;
-        }
-    }
-
-    public class GetEm
-    {
-        public Vector getDay_em(float[] em, Date[] dt, string emBeg, string emEnd)
-        {
-            //每一场的蒸发数据提取情况
-            Vector vec = new Vector();
-            CommonFun cf = new CommonFun();
-            float[] day_em;
-            Date[] day_dt;
-            string[] date = new string[dt.Length];
-            int numBeg = 0;
-            int numEnd = 0;
-            for (int i = 0; i < dt.Length; i++)
-            {
-                date[i] = String_Date.DateToString(dt[i]);
-                if (date[i].Equals(emBeg))
-                {
-                    numBeg = i;
-                }
-                if (date[i].Equals(emEnd))
-                {
-                    numEnd = i;
-                }
-            }
-
-            int temp = numEnd - numBeg + 1;
-            day_dt = new Date[temp];
-            day_em = new float[temp];
-            for (int j = 0; j < temp; j++)
-            {
-                day_dt[j] = dt[numBeg + j];
-                day_em[j] = em[numBeg + j];
-            }
-
-            vec.addElement(day_dt);
-            vec.addElement(day_em);
-            return vec;
-        }
-
-        public Vector getStep_em(float[] ave_em, Date[] dt, string step_emBeg, string step_emEnd)
-        {
-            Vector vec = new Vector();
-            float[] step_em;
-            Date[] step_dt;
-            string[] date = new string[dt.Length];
-            int numBeg = 0;
-            int numEnd = 0;
-
-            int i;
-            for (i = 0; i < dt.Length; i++)
-            {
-                date[i] = String_Date.DateToString(dt[i]);
-                if (date[i].Equals(step_emBeg))
-                {
-                    numBeg = i;
-                }
-
-                if (date[i].Equals(step_emEnd))
-                {
-                    numEnd = i;
-                }
-            }
-            int temp = numEnd - numBeg + 1;
-            step_dt = new Date[temp];
-            step_em = new float[temp];
-
-            for (int j = 0; j < temp; j++)
-            {
-                step_dt[j] = dt[numBeg + j];
-                step_em[j] = ave_em[numBeg + j];
-            }
-            vec.addElement(step_dt);
-            vec.addElement(step_em);
-            return vec;
-        }
-    }
 
     class XajParam
     {
 
-        public float Sm;    //张力水 蓄水容量
+        public float Sm;    //寮犲姏姘?钃勬按瀹归噺
         public float Wm;
-        public float Um;    //上层蓄水容量 
-        public float Lm;    //下层蓄水容量  
-        public float B;   //张力水蓄水容量曲线的方次
-        public float Im;  //不透水的面积比例      0.01~0.02
-        public float K;   //蒸发能力折算系数
-        public float C;    //深层蒸发系数
-        public float Ki;  //自由水蓄水水库对壤中流的出流系数
-        public float Ex;  //表土自由水蓄水容量曲线的方次
-        public float Ci;  //壤中流消退系数
-        public float Cg;  //地下径流消退系数                          值越小  峰值越大   对退水的影响较小
-        public float Cs;   //地表径流消退系数                   降低洪量比较敏感  值越大 消退越慢 
-        public float L;      // 滞后时段数,增大使峰值向后，并有降低洪峰的作用。
-        public float Cr;   //河网蓄水消退系数
+        public float Um;    //涓婂眰钃勬按瀹归噺 
+        public float Lm;    //涓嬪眰钃勬按瀹归噺  
+        public float B;   //寮犲姏姘磋搫姘村閲忔洸绾跨殑鏂规
+        public float Im;  //涓嶉€忔按鐨勯潰绉瘮渚?     0.01~0.02
+        public float K;   //钂稿彂鑳藉姏鎶樼畻绯绘暟
+        public float C;    //娣卞眰钂稿彂绯绘暟
+        public float Ki;  //鑷敱姘磋搫姘存按搴撳澹や腑娴佺殑鍑烘祦绯绘暟
+        public float Ex;  //琛ㄥ湡鑷敱姘磋搫姘村閲忔洸绾跨殑鏂规
+        public float Ci;  //澹や腑娴佹秷閫€绯绘暟
+        public float Cg;  //鍦颁笅寰勬祦娑堥€€绯绘暟                          鍊艰秺灏? 宄板€艰秺澶?  瀵归€€姘寸殑褰卞搷杈冨皬
+        public float Cs;   //鍦拌〃寰勬祦娑堥€€绯绘暟                   闄嶄綆娲噺姣旇緝鏁忔劅  鍊艰秺澶?娑堥€€瓒婃參 
+        public float L;      // 婊炲悗鏃舵鏁?澧炲ぇ浣垮嘲鍊煎悜鍚庯紝骞舵湁闄嶄綆娲嘲鐨勪綔鐢ㄣ€?
+        public float Cr;   //娌崇綉钃勬按娑堥€€绯绘暟
 
 
         public XajParam(double Sm, double Wm, double Um, double Lm, double B, double Im, double K, double C, double Ki, double Ex, double Ci, double Cg, double Cs, double L, double Cr)
@@ -966,17 +327,17 @@ namespace bjd_model.CatchMent
             int numUnit, float[] weighth, float ua0_day, float la0_day,
             float da0_day, float baseFlow, string rainBeg)
         {
-            // 每场洪水每场预报单元的模拟方法 ★★★★☆☆☆☆☆☆☆☆☆☆☆☆☆☆★★★★
+            // 姣忓満娲按姣忓満棰勬姤鍗曞厓鐨勬ā鎷熸柟娉?鈽呪槄鈽呪槄鈽嗏槅鈽嗏槅鈽嗏槅鈽嗏槅鈽嗏槅鈽嗏槅鈽嗏槅鈽呪槄鈽呪槄
             Vector vec = new Vector();
 
             int hour_number = ((int)(24 / Model_Const.XAJ_TIMESTEP_HOUR));
             int length1;
-            int deday = 0;  // 不知道是什么意思guokelun
-            int i_step = 1; //时段步长
-            int i_max_len = deday * hour_number / i_step;  //不知道是什么意思guokelun
+            int deday = 0;  // 涓嶇煡閬撴槸浠€涔堟剰鎬漡uokelun
+            int i_step = 1; //鏃舵姝ラ暱
+            int i_max_len = deday * hour_number / i_step;  //涓嶇煡閬撴槸浠€涔堟剰鎬漡uokelun
             Vector flood = new Vector();
 
-            /**************** 新安江参数赋值 *****************/
+            /**************** 鏂板畨姹熷弬鏁拌祴鍊?*****************/
             float sm = para[0];
             float WM = para[1];
             float UM = para[2];
@@ -992,18 +353,18 @@ namespace bjd_model.CatchMent
             float cs = para[12];
             float L = para[13];
             float cr = para[14];
-            /**************** 新安江参数赋值 *****************/
-            length1 = day_p.Length;// /日降雨历时长度
+            /**************** 鏂板畨姹熷弬鏁拌祴鍊?*****************/
+            length1 = day_p.Length;// /鏃ラ檷闆ㄥ巻鏃堕暱搴?
 
-            /********** 日蒸发计算土壤含水量初始值 ***********/
-            float[] R_day = new float[length1];// 径流历时长度等于日降雨历时长度
-            float[] ua_day = new float[length1 + 1];  //上层土壤含水量
-            float[] la_day = new float[length1 + 1];  //上层土壤含水量
-            float[] da_day = new float[length1 + 1];  //上层土壤含水量
+            /********** 鏃ヨ捀鍙戣绠楀湡澹ゅ惈姘撮噺鍒濆鍊?***********/
+            float[] R_day = new float[length1];// 寰勬祦鍘嗘椂闀垮害绛変簬鏃ラ檷闆ㄥ巻鏃堕暱搴?
+            float[] ua_day = new float[length1 + 1];  //涓婂眰鍦熷￥鍚按閲?
+            float[] la_day = new float[length1 + 1];  //涓婂眰鍦熷￥鍚按閲?
+            float[] da_day = new float[length1 + 1];  //涓婂眰鍦熷￥鍚按閲?
             XajFunction.runoff_xaj3_model_day(WM, UM, LM, im, b, k, c, length1,
                     day_p, day_em, ua0_day, la0_day, da0_day, R_day, ua_day,
                     la_day, da_day); // *****************************************1
-            /********** 日蒸发计算土壤含水量初始值 ***********/
+            /********** 鏃ヨ捀鍙戣绠楀湡澹ゅ惈姘撮噺鍒濆鍊?***********/
             float[] sum = new float[day_p.Length + 1];
             float ua0 = ua_day[length1];
             float la0 = la_day[length1];
@@ -1017,13 +378,13 @@ namespace bjd_model.CatchMent
             Vector flood_dt = new Vector();
             flood = XajFunction.zjb_flow_xaj3_net(UM, LM, WM, im, b, k, c, step_p, ave_em,
                     ua0, la0, da0, ex, sm, ki, i_max_len, fr0, s0, cs, ci, cg,
-                    deday, i_step, area, length, baseFlow, rainBeg, flood, flood_dt);   //产流、分水源、以及坡地汇流计算
-            /****************** 河网汇流计算 *********************/
+                    deday, i_step, area, length, baseFlow, rainBeg, flood, flood_dt);   //浜ф祦銆佸垎姘存簮銆佷互鍙婂潯鍦版眹娴佽绠?
+            /****************** 娌崇綉姹囨祦璁＄畻 *********************/
             float[] dq = new float[flood.size()];
             dq = XajFunction.Zhihourouting(flood, cr, L);
-            /****************** 河网汇流计算 *********************/
+            /****************** 娌崇綉姹囨祦璁＄畻 *********************/
 
-            vec.add(dq); // 4 该单元的产汇流结果
+            vec.add(dq); // 4 璇ュ崟鍏冪殑浜ф眹娴佺粨鏋?
             vec.add(flood_dt);
             return vec;
         }
@@ -1037,10 +398,10 @@ namespace bjd_model.CatchMent
 
 
             for (int i = 0; i < oneUnitFlood[0].Length; i++)
-            { // 循环场次洪水过程的不同时刻
+            { // 寰幆鍦烘娲按杩囩▼鐨勪笉鍚屾椂鍒?
                 float Flood = 0;
                 for (int j = 0; j < numUnit; j++)
-                { // 循环不同区域
+                { // 寰幆涓嶅悓鍖哄煙
                     Flood += oneUnitFlood[j][i];
                 }
                 vec_Flood.add(Flood);
@@ -1050,11 +411,11 @@ namespace bjd_model.CatchMent
             {
                 allUnitFlood[i] = (float)vec_Flood.get(i);
             }
-            vec.add(allUnitFlood);// /0 一场洪水的洪水过程
+            vec.add(allUnitFlood);// /0 涓€鍦烘椽姘寸殑娲按杩囩▼
             return vec;
         }
 
-        //计算雨量的加权平均值值***这个函数对于本系统没有用，因为本系统直接用的面雨量，但是删掉的话需要改动程序，所以就保留了下来 guokelun
+        //璁＄畻闆ㄩ噺鐨勫姞鏉冨钩鍧囧€煎€?**杩欎釜鍑芥暟瀵逛簬鏈郴缁熸病鏈夌敤锛屽洜涓烘湰绯荤粺鐩存帴鐢ㄧ殑闈㈤洦閲忥紝浣嗘槸鍒犳帀鐨勮瘽闇€瑕佹敼鍔ㄧ▼搴忥紝鎵€浠ュ氨淇濈暀浜嗕笅鏉?guokelun
         public static Vector getAveValue(float[][] value, float[] rainWeight)
         {
             Vector vec = new Vector();
@@ -1075,7 +436,7 @@ namespace bjd_model.CatchMent
     {
 
         /**
-         * 蒸发日计算模型
+         * 钂稿彂鏃ヨ绠楁ā鍨?
          * 
          * "param WM
          * "param UM
@@ -1085,17 +446,17 @@ namespace bjd_model.CatchMent
          * "param k
          * "param c
          * "param length1
-         *            日模型长度
+         *            鏃ユā鍨嬮暱搴?
          * "param P_day
-         *            日降雨
+         *            鏃ラ檷闆?
          * "param em_day
-         *            日蒸发
+         *            鏃ヨ捀鍙?
          * "param ua0_day
          * "param la0_day
          * "param da0_day
          * "param xajParam
          * "param R_day
-         *            日径流量
+         *            鏃ュ緞娴侀噺
          * "param ua_day
          * "param la_day
          * "param da_day
@@ -1111,14 +472,14 @@ namespace bjd_model.CatchMent
         {
             float PE;
             float DM;
-            float[] EU = new float[length1];// 蒸发
+            float[] EU = new float[length1];// 钂稿彂
             float[] EL = new float[length1];
             float[] ED = new float[length1];
-            float wmt, MM, A, EP;// t时刻的土壤平均含水量//点蓄水容量的最大值（7-1）
-            // wmt所对应的流域蓄水容量曲线的纵坐标、蒸发
+            float wmt, MM, A, EP;// t鏃跺埢鐨勫湡澹ゅ钩鍧囧惈姘撮噺//鐐硅搫姘村閲忕殑鏈€澶у€硷紙7-1锛?
+            // wmt鎵€瀵瑰簲鐨勬祦鍩熻搫姘村閲忔洸绾跨殑绾靛潗鏍囥€佽捀鍙?
             ua_day[0] = ua0_day;
             la_day[0] = la0_day;
-            da_day[0] = da0_day;// 每一层的初始含水量
+            da_day[0] = da0_day;// 姣忎竴灞傜殑鍒濆鍚按閲?
 
             DM = WM - (UM + LM);
             if (DM < 0)
@@ -1128,23 +489,23 @@ namespace bjd_model.CatchMent
             else
             {
 
-                MM = WM * (1.0f + b) / (1.0f - im);// 点蓄水容量的最大值（7-1）
+                MM = WM * (1.0f + b) / (1.0f - im);// 鐐硅搫姘村閲忕殑鏈€澶у€硷紙7-1锛?
 
                 for (int i = 0; i < length1; i++)
                 {
-                    wmt = ua_day[i] + la_day[i] + da_day[i]; // 当前时段土壤含水量
+                    wmt = ua_day[i] + la_day[i] + da_day[i]; // 褰撳墠鏃舵鍦熷￥鍚按閲?
                     if (wmt > WM)
                         wmt = WM;
                     EP = k * em_day[i];
                     PE = P_day[i] - EP;
 
-                    // 以下计算径流和
+                    // 浠ヤ笅璁＄畻寰勬祦鍜?
                     if (PE >= 0)
                     {
                         float temp = new java.lang.Double(java.lang.Math.pow(1 - wmt / WM,
-                                1.0 / (b + 1))).floatValue();// （3-6）
+                                1.0 / (b + 1))).floatValue();// 锛?-6锛?
                         A = MM * (1 - temp);
-                        if (PE + A < MM)// （3-7）
+                        if (PE + A < MM)// 锛?-7锛?
                         {
                             temp = new java.lang.Double(java.lang.Math.pow(1 - (PE + A) / MM, b + 1))
                                     .floatValue();
@@ -1154,27 +515,27 @@ namespace bjd_model.CatchMent
                         {
                             R_day[i] = PE - WM + wmt;
                         }
-                        // 以下计算蒸散发，按照水文教材p156流程图
-                        EU[i] = k * em_day[i];// 上层按蒸散发能力蒸发
+                        // 浠ヤ笅璁＄畻钂告暎鍙戯紝鎸夌収姘存枃鏁欐潗p156娴佺▼鍥?
+                        EU[i] = k * em_day[i];// 涓婂眰鎸夎捀鏁ｅ彂鑳藉姏钂稿彂
                         EL[i] = 0;
                         ED[i] = 0;
-                        if (ua_day[i] + PE - R_day[i] < UM)// 如果上层土壤含水量没有饱和
+                        if (ua_day[i] + PE - R_day[i] < UM)// 濡傛灉涓婂眰鍦熷￥鍚按閲忔病鏈夐ケ鍜?
                         {
                             ua_day[i + 1] = ua_day[i] + PE - R_day[i];
                             la_day[i + 1] = la_day[i];
                             da_day[i + 1] = da_day[i];
                         }
                         else
-                        { // 如果上层土壤含水量已经饱和
+                        { // 濡傛灉涓婂眰鍦熷￥鍚按閲忓凡缁忛ケ鍜?
 
-                            if (ua_day[i] + la_day[i] + PE - R_day[i] - UM > LM)// 如果第二层土壤含水量已经饱和
+                            if (ua_day[i] + la_day[i] + PE - R_day[i] - UM > LM)// 濡傛灉绗簩灞傚湡澹ゅ惈姘撮噺宸茬粡楗卞拰
                             {
                                 ua_day[i + 1] = UM;
                                 la_day[i + 1] = LM;
                                 da_day[i + 1] = wmt + PE - R_day[i] - ua_day[i + 1]
                                         - la_day[i + 1];
                             }
-                            else// 如果第二层土壤含水量没有饱和
+                            else// 濡傛灉绗簩灞傚湡澹ゅ惈姘撮噺娌℃湁楗卞拰
                             {
                                 ua_day[i + 1] = UM;
                                 la_day[i + 1] = ua_day[i] + la_day[i] + PE
@@ -1183,20 +544,20 @@ namespace bjd_model.CatchMent
                             }
                         }
                     }
-                    // 以下计算蒸发量PE<0
+                    // 浠ヤ笅璁＄畻钂稿彂閲廝E<0
                     else if (PE < 0)
                     {
                         R_day[i] = 0;
-                        if (ua_day[i] + PE > 0)// 上层没有被蒸发完
+                        if (ua_day[i] + PE > 0)// 涓婂眰娌℃湁琚捀鍙戝畬
                         {
-                            EU[i] = EP;// 上层按蒸散发能力蒸发
+                            EU[i] = EP;// 涓婂眰鎸夎捀鏁ｅ彂鑳藉姏钂稿彂
                             EL[i] = 0;
                             ED[i] = 0;
                             ua_day[i + 1] = ua_day[i] + PE;
                             la_day[i + 1] = la_day[i];
                             da_day[i + 1] = da_day[i];
                         }
-                        else// 上层已经被蒸发完
+                        else// 涓婂眰宸茬粡琚捀鍙戝畬
                         {
                             EU[i] = ua_day[i] + P_day[i];
                             ua_day[i + 1] = 0;
@@ -1226,7 +587,7 @@ namespace bjd_model.CatchMent
                             }
                         }
                     }
-                    // 约束最小值
+                    // 绾︽潫鏈€灏忓€?
                     if (ua_day[i + 1] < 0)
                         ua_day[i + 1] = 0;
                     if (la_day[i + 1] < 0)
@@ -1245,14 +606,14 @@ namespace bjd_model.CatchMent
 
         }
         /**
-         * 坡地汇流计算模型
+         * 鍧″湴姹囨祦璁＄畻妯″瀷
          * 
          * "param cs
-         *            地表（河网蓄水量）消退系数
+         *            鍦拌〃锛堟渤缃戣搫姘撮噺锛夋秷閫€绯绘暟
          * "param ci
-         *            壤中流消退系数
+         *            澹や腑娴佹秷閫€绯绘暟
          * "param cg
-         *            地下径流消退系数
+         *            鍦颁笅寰勬祦娑堥€€绯绘暟
          * "param deday
          * "param i_step
          * "param i_periods
@@ -1308,7 +669,7 @@ namespace bjd_model.CatchMent
             }
             float _em;
 
-            /****************** 洪水开始时间 **********************/
+            /****************** 娲按寮€濮嬫椂闂?**********************/
 
             //SimpleDateFormat simpledateformat = new SimpleDateFormat(
             //        "yyyy-MM-dd HH:mm:ss");
@@ -1319,43 +680,43 @@ namespace bjd_model.CatchMent
             }
             catch (java.lang.Exception e)
             {
-                // TODO 自动生成的 catch 块
+                // TODO 鑷姩鐢熸垚鐨?catch 鍧?
                 e.printStackTrace();
             }
             Calendar flood_date = Calendar.getInstance();
             flood_date.setTime(rain_Beg);
 
-            float PE;// 降雨量和蒸发量的差值。
-            float DM;// 深层土壤蓄水容量。
-            float EU;// 上层蒸发量
-            float EL;// 下层蒸发量
-            float ED;// 深层蒸发量
-            float wmt, MM, A, EP;// t时刻的土壤平均含水量//点蓄水容量的最大值（7-1）
-            // wmt所对应的流域蓄水容量曲线的纵坐标、流域蒸散发能力
+            float PE;// 闄嶉洦閲忓拰钂稿彂閲忕殑宸€笺€?
+            float DM;// 娣卞眰鍦熷￥钃勬按瀹归噺銆?
+            float EU;// 涓婂眰钂稿彂閲?
+            float EL;// 涓嬪眰钂稿彂閲?
+            float ED;// 娣卞眰钂稿彂閲?
+            float wmt, MM, A, EP;// t鏃跺埢鐨勫湡澹ゅ钩鍧囧惈姘撮噺//鐐硅搫姘村閲忕殑鏈€澶у€硷紙7-1锛?
+            // wmt鎵€瀵瑰簲鐨勬祦鍩熻搫姘村閲忔洸绾跨殑绾靛潗鏍囥€佹祦鍩熻捀鏁ｅ彂鑳藉姏
             ua.add(ua0);
             la.add(la0);
-            da.add(da0);// 每一层的初始含水量
-            // 从三水源模型结构变量中取得模型参数
-            // 产流量计算模型参数
+            da.add(da0);// 姣忎竴灞傜殑鍒濆鍚按閲?
+            // 浠庝笁姘存簮妯″瀷缁撴瀯鍙橀噺涓彇寰楁ā鍨嬪弬鏁?
+            // 浜ф祦閲忚绠楁ā鍨嬪弬鏁?
             DM = WM - (UM + LM);
             /** 2 **/
             /** 3 **/
-            float kg; // 深层地下水出流系数
+            float kg; // 娣卞眰鍦颁笅姘村嚭娴佺郴鏁?
             // float PE;
-            float SMM, AU, X;// 全流域最大点的蓄水容量SMM=MS、、前一时段的产流面积
-            float SS, Q, GD, ID;// 单位面积径流量、///==KI/KG
+            float SMM, AU, X;// 鍏ㄦ祦鍩熸渶澶х偣鐨勮搫姘村閲廠MM=MS銆併€佸墠涓€鏃舵鐨勪骇娴侀潰绉?
+            float SS, Q, GD, ID;// 鍗曚綅闈㈢Н寰勬祦閲忋€?//==KI/KG
             int d, G;
-            float KID, KGD; // /KID=书中KI△t;KGD=书中KG△t，即时段转换后的KI、KG
+            float KID, KGD; // /KID=涔︿腑KI鈻硉;KGD=涔︿腑KG鈻硉锛屽嵆鏃舵杞崲鍚庣殑KI銆並G
             kg = 0.7f - ki;
-            d = 24 / i_step; // 一天分的时段数
+            d = 24 / i_step; // 涓€澶╁垎鐨勬椂娈垫暟
             float temp1 = new java.lang.Double(java.lang.Math.pow(1 - (kg + ki), 1.0 / d)).floatValue();
-            KID = (1.0f - temp1) / (1.0f + kg / ki);// kssd-和kss对应的参数 ///公式（5-33）
-            // 计算步长内流域自由水蓄水水库的壤中流的出流系数
-            KGD = KID * kg / ki;// 和kg对应的参数 /计算步长内流域自由水蓄水水库的地下水的出流系数
-            SMM = (1 + ex) * sm;// 自由水的点蓄水容量对应的自由水蓄水容量///公式（5-23）
+            KID = (1.0f - temp1) / (1.0f + kg / ki);// kssd-鍜宬ss瀵瑰簲鐨勫弬鏁?///鍏紡锛?-33锛?
+            // 璁＄畻姝ラ暱鍐呮祦鍩熻嚜鐢辨按钃勬按姘村簱鐨勫￥涓祦鐨勫嚭娴佺郴鏁?
+            KGD = KID * kg / ki;// 鍜宬g瀵瑰簲鐨勫弬鏁?/璁＄畻姝ラ暱鍐呮祦鍩熻嚜鐢辨按钃勬按姘村簱鐨勫湴涓嬫按鐨勫嚭娴佺郴鏁?
+            SMM = (1 + ex) * sm;// 鑷敱姘寸殑鐐硅搫姘村閲忓搴旂殑鑷敱姘磋搫姘村閲?//鍏紡锛?-23锛?
             _s = s0;
             s.add(_s);
-            _fr = fr0; // s-自由水蓄水深、fr-产流面积
+            _fr = fr0; // s-鑷敱姘磋搫姘存繁銆乫r-浜ф祦闈㈢Н
             /** 3 **/
 
             /****************************************************************************************/
@@ -1365,18 +726,18 @@ namespace bjd_model.CatchMent
             float Flood, qg, qs, qi;
             // Vector flood = new Vector();
 
-            CSD = new java.lang.Double(java.lang.Math.pow(cs, 1.0 / d)).floatValue();// 每时段的参数值，消退系数
+            CSD = new java.lang.Double(java.lang.Math.pow(cs, 1.0 / d)).floatValue();// 姣忔椂娈电殑鍙傛暟鍊硷紝娑堥€€绯绘暟
             CID = new java.lang.Double(java.lang.Math.pow(ci, 1.0 / d)).floatValue();
             CGD = new java.lang.Double(java.lang.Math.pow(cg, 1.0 / d)).floatValue();
 
-            float U = area / (3.6f * i_step); // 单位换算系数，将径流深转化为流量
+            float U = area / (3.6f * i_step); // 鍗曚綅鎹㈢畻绯绘暟锛屽皢寰勬祦娣辫浆鍖栦负娴侀噺
             // float QG[] = new float[i_floods];
             // float QI[] = new float[i_floods];
             // float QS[] = new float[i_floods];
             Vector QG = new Vector();
             Vector QI = new Vector();
             Vector QS = new Vector();
-            // 地下径流和壤中流汇流
+            // 鍦颁笅寰勬祦鍜屽￥涓祦姹囨祦
 
             bool b_flood = true;
             int i = 0;
@@ -1405,28 +766,28 @@ namespace bjd_model.CatchMent
                 else
                 {
                     /*
-                     * 先求得点蓄水容量最大值。 再通过初始土壤含水量与土壤最大蓄水容量进行比较。 再计算径流和：
-                     * 1，计算初始平均蓄水量相应的纵坐标A 2，再分情况考虑产流
+                     * 鍏堟眰寰楃偣钃勬按瀹归噺鏈€澶у€笺€?鍐嶉€氳繃鍒濆鍦熷￥鍚按閲忎笌鍦熷￥鏈€澶ц搫姘村閲忚繘琛屾瘮杈冦€?鍐嶈绠楀緞娴佸拰锛?
+                     * 1锛岃绠楀垵濮嬪钩鍧囪搫姘撮噺鐩稿簲鐨勭旱鍧愭爣A 2锛屽啀鍒嗘儏鍐佃€冭檻浜ф祦
                      */
-                    MM = WM * (1.0f + b) / (1 - im);// 点蓄水容量的最大值（7-1）
+                    MM = WM * (1.0f + b) / (1 - im);// 鐐硅搫姘村閲忕殑鏈€澶у€硷紙7-1锛?
                     // System.out.println(i_periods+" "");
 
-                    wmt = (float)ua.get(i) + (float)la.get(i) + (float)da.get(i); // 当前时段土壤含水量
+                    wmt = (float)ua.get(i) + (float)la.get(i) + (float)da.get(i); // 褰撳墠鏃舵鍦熷￥鍚按閲?
                     if (wmt > WM)
                         wmt = WM;
-                    EP = k * _em; // /蒸发能力；k为折减系数
+                    EP = k * _em; // /钂稿彂鑳藉姏锛沰涓烘姌鍑忕郴鏁?
                     // System.out.println(em[i]+" """""");
                     // System.out.println(em.Length+" """""");
                     // System.out.println((float)P1.get(i));
                     PE = (float)P1.get(i) - EP;
                     float _ua = 0, _la = 0, _da = 0;
-                    // 以下计算径流和
+                    // 浠ヤ笅璁＄畻寰勬祦鍜?
                     if (PE >= 0)
                     {
                         float temp = new java.lang.Double(java.lang.Math.pow(1 - wmt / WM,
-                                1.0 / (b + 1))).floatValue(); // （3-6）
-                        A = MM * (1 - temp); // /公式（5-9）
-                        if (PE + A < MM) // （3-7）
+                                1.0 / (b + 1))).floatValue(); // 锛?-6锛?
+                        A = MM * (1 - temp); // /鍏紡锛?-9锛?
+                        if (PE + A < MM) // 锛?-7锛?
                         {
 
                             temp = new java.lang.Double(java.lang.Math.pow(1 - (PE + A) / MM, b + 1))
@@ -1442,11 +803,11 @@ namespace bjd_model.CatchMent
 
                         }
                         // System.out.println("R["+i+"]= "+R[i]);
-                        // 以下计算蒸散发，按照水文教材p156流程图
-                        EU = k * _em; // 上层按蒸散发能力蒸发
+                        // 浠ヤ笅璁＄畻钂告暎鍙戯紝鎸夌収姘存枃鏁欐潗p156娴佺▼鍥?
+                        EU = k * _em; // 涓婂眰鎸夎捀鏁ｅ彂鑳藉姏钂稿彂
                         EL = 0;
                         ED = 0;
-                        if ((float)ua.get(i) + PE - (float)R.get(i) < UM)// 如果上层土壤含水量没有饱和
+                        if ((float)ua.get(i) + PE - (float)R.get(i) < UM)// 濡傛灉涓婂眰鍦熷￥鍚按閲忔病鏈夐ケ鍜?
                         {
                             _ua = (float)ua.get(i) + PE - (float)R.get(i);
 
@@ -1456,10 +817,10 @@ namespace bjd_model.CatchMent
 
                         }
                         else
-                        {// 如果上层土壤含水量已经饱和
+                        {// 濡傛灉涓婂眰鍦熷￥鍚按閲忓凡缁忛ケ鍜?
 
                             if ((float)ua.get(i) + (float)la.get(i) + PE
-                                    - (float)R.get(i) - UM > LM)// 如果第二层土壤含水量已经饱和
+                                    - (float)R.get(i) - UM > LM)// 濡傛灉绗簩灞傚湡澹ゅ惈姘撮噺宸茬粡楗卞拰
                             {
                                 _ua = UM;
 
@@ -1468,7 +829,7 @@ namespace bjd_model.CatchMent
                                 _da = wmt + PE - (float)R.get(i) - _ua - _la;
 
                             }
-                            else// 如果第二层土壤含水量没有饱和
+                            else// 濡傛灉绗簩灞傚湡澹ゅ惈姘撮噺娌℃湁楗卞拰
                             {
                                 _ua = UM;
 
@@ -1480,14 +841,14 @@ namespace bjd_model.CatchMent
                             }
                         }
                     }
-                    // 以下计算产流量PE<0
+                    // 浠ヤ笅璁＄畻浜ф祦閲廝E<0
                     else if (PE < 0)
-                    {// ？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？
+                    {// 锛燂紵锛燂紵锛燂紵锛燂紵锛燂紵锛燂紵锛燂紵锛燂紵锛燂紵锛燂紵锛燂紵锛燂紵锛燂紵锛燂紵锛燂紵锛燂紵锛燂紵锛?
                         r = 0;
                         R.add(r);
-                        if ((float)ua.get(i) + PE > 0)// 上层没有被蒸发完
+                        if ((float)ua.get(i) + PE > 0)// 涓婂眰娌℃湁琚捀鍙戝畬
                         {
-                            EU = EP;// 上层按蒸散发能力蒸发
+                            EU = EP;// 涓婂眰鎸夎捀鏁ｅ彂鑳藉姏钂稿彂
                             EL = 0;
                             ED = 0;
                             _ua = (float)ua.get(i) + PE;
@@ -1497,7 +858,7 @@ namespace bjd_model.CatchMent
                             _da = (float)da.get(i);
 
                         }
-                        else// 上层已经被蒸发完
+                        else// 涓婂眰宸茬粡琚捀鍙戝畬
                         {
                             EU = (float)ua.get(i) + (float)P1.get(i);
                             _ua = 0;
@@ -1562,41 +923,41 @@ namespace bjd_model.CatchMent
                 float rs, rg, ri;
                 rs = 0;
                 rg = 0;
-                ri = 0;// 地面径流RS、地下径流RG、壤中流RSS(RI)
+                ri = 0;// 鍦伴潰寰勬祦RS銆佸湴涓嬪緞娴丷G銆佸￥涓祦RSS(RI)
                 if (PE > 0)
                 {
                     if (i == 0)
                     {
-                        X = fr0;// X 表示前一个时段的产流面积
+                        X = fr0;// X 琛ㄧず鍓嶄竴涓椂娈电殑浜ф祦闈㈢Н
                     }
                     else
                     {
-                        X = (float)fr.get(i - 1);// 图7-9中的 k
+                        X = (float)fr.get(i - 1);// 鍥?-9涓殑 k
                     }
-                    _fr = (float)R.get(i) / PE;// 计算产流面积，是否要考虑不透水面积？？？？？？？？？？
+                    _fr = (float)R.get(i) / PE;// 璁＄畻浜ф祦闈㈢Н锛屾槸鍚﹁鑰冭檻涓嶉€忔按闈㈢Н锛燂紵锛燂紵锛燂紵锛燂紵锛燂紵
                     if (_fr < 0.001f)
                     {
                         _fr = 0.001f;
                     }
                     fr.add(_fr);
-                    _s = X * (float)s.get(i) / (float)fr.get(i);// 自由水
-                    SS = _s; // 暂时保存
-                    Q = (float)R.get(i) / (float)fr.get(i); // 单位产流面积产生的径流///？？？？？？
-                    G = new Float(Q / 5.0f).intValue() + 1;// 解决差分计算的误差问题，5毫米净雨一段把每时段分为G段，///公式（5-31）
+                    _s = X * (float)s.get(i) / (float)fr.get(i);// 鑷敱姘?
+                    SS = _s; // 鏆傛椂淇濆瓨
+                    Q = (float)R.get(i) / (float)fr.get(i); // 鍗曚綅浜ф祦闈㈢Н浜х敓鐨勫緞娴?//锛燂紵锛燂紵锛燂紵
+                    G = new Float(Q / 5.0f).intValue() + 1;// 瑙ｅ喅宸垎璁＄畻鐨勮宸棶棰橈紝5姣背鍑€闆ㄤ竴娈垫妸姣忔椂娈靛垎涓篏娈碉紝///鍏紡锛?-31锛?
 
-                    Q = Q / G;// 单位段（5mm）产生的径流深
+                    Q = Q / G;// 鍗曚綅娈碉紙5mm锛変骇鐢熺殑寰勬祦娣?
                     temp1 = new java.lang.Double(java.lang.Math.pow(1 - (kg + ki), 1.0 / G))
                             .floatValue();
-                    ID = (1 - temp1) / (1 + kg / ki);// 以每个时段的KSSD和KGD为参数采用公式(7-9)计算G时段中的每个时段的KSSD和KGD
+                    ID = (1 - temp1) / (1 + kg / ki);// 浠ユ瘡涓椂娈电殑KSSD鍜孠GD涓哄弬鏁伴噰鐢ㄥ叕寮?7-9)璁＄畻G鏃舵涓殑姣忎釜鏃舵鐨凨SSD鍜孠GD
                     GD = ID * kg / ki;
 
                     for (int j = 0; j < G; j++)
                     {
                         if (_s > sm)
                             _s = sm;
-                        temp1 = new java.lang.Double(java.lang.Math.pow(1 - _s / sm, 1.0 / (1 + ex)))// 错了吧？？？？？？？？？？
+                        temp1 = new java.lang.Double(java.lang.Math.pow(1 - _s / sm, 1.0 / (1 + ex)))// 閿欎簡鍚э紵锛燂紵锛燂紵锛燂紵锛燂紵锛?
                                 .floatValue();
-                        AU = SMM * (1 - temp1); // （7-6)
+                        AU = SMM * (1 - temp1); // 锛?-6)
                         if (AU + Q < SMM)
                         {
                             float tmp = new java.lang.Double(java.lang.Math.pow(1 - (Q + AU) / SMM,
@@ -1606,12 +967,12 @@ namespace bjd_model.CatchMent
                         }
                         else
                         {
-                            rs += (Q + _s - sm) * (float)fr.get(i);// G个时段的径流的和
+                            rs += (Q + _s - sm) * (float)fr.get(i);// G涓椂娈电殑寰勬祦鐨勫拰
                         }
-                        _s += (j + 1) * Q - rs / (float)fr.get(i);// 暂时保存每个G时段的平均自由水深度
-                        rg += _s * GD * (float)fr.get(i);// /（5-29）
+                        _s += (j + 1) * Q - rs / (float)fr.get(i);// 鏆傛椂淇濆瓨姣忎釜G鏃舵鐨勫钩鍧囪嚜鐢辨按娣卞害
+                        rg += _s * GD * (float)fr.get(i);// /锛?-29锛?
                         ri += _s * ID * (float)fr.get(i);
-                        _s = (j + 1) * Q + SS - (rs + ri + rg) / (float)fr.get(i);// //？？？？？？
+                        _s = (j + 1) * Q + SS - (rs + ri + rg) / (float)fr.get(i);// //锛燂紵锛燂紵锛燂紵
                     }
                     if (_s > sm)
                     {
@@ -1620,7 +981,7 @@ namespace bjd_model.CatchMent
                     s.add(_s);
                 }
                 else
-                { // PE < 0，不需要分时段
+                { // PE < 0锛屼笉闇€瑕佸垎鏃舵
 
                     if (i == 0)
                     {
@@ -1628,10 +989,10 @@ namespace bjd_model.CatchMent
                     }
                     else
                     {
-                        _fr = (float)fr.get(i - 1);// 产流面积不变
+                        _fr = (float)fr.get(i - 1);// 浜ф祦闈㈢Н涓嶅彉
                     }
                     // s[i] = 0;
-                    rg = (float)s.get(i) * KGD * _fr;// （7-5）
+                    rg = (float)s.get(i) * KGD * _fr;// 锛?-5锛?
                     ri = rg * KID / KGD;
                     if (_fr < 0.001f)
                     {
@@ -1658,14 +1019,14 @@ namespace bjd_model.CatchMent
                 /*********************************************************************************************/
                 if (i == 0)
                 {
-                    qs = (float)RS.get(i) * (1 - cs) * U;// 地面径流
-                    qg = (float)RG.get(i) * (1 - cg) * U;// 地下径流
-                    qi = (float)RI.get(i) * (1 - ci) * U;// 壤中流
+                    qs = (float)RS.get(i) * (1 - cs) * U;// 鍦伴潰寰勬祦
+                    qg = (float)RG.get(i) * (1 - cg) * U;// 鍦颁笅寰勬祦
+                    qi = (float)RI.get(i) * (1 - ci) * U;// 澹や腑娴?
                 }
                 else
                 {
                     qs = (float)QS.get(i - 1) * cs + (float)RS.get(i) * (1 - cs)
-                            * U;// 地面径流经过地表水蓄水库的消退、、更改时间11.5
+                            * U;// 鍦伴潰寰勬祦缁忚繃鍦拌〃姘磋搫姘村簱鐨勬秷閫€銆併€佹洿鏀规椂闂?1.5
                     qg = (float)QG.get(i - 1) * cg + (float)RG.get(i) * (1 - cg)
                             * U;
                     qi = (float)QI.get(i - 1) * ci + (float)RI.get(i) * (1 - ci)
@@ -1679,15 +1040,15 @@ namespace bjd_model.CatchMent
                 flood_dt.add(flood_date.getTime());
                 flood_date.add(Calendar.MINUTE, (int)(Model_Const.XAJ_TIMESTEP_HOUR * 60));
 
-                //if (i > length && qs + qg + qi < baseFlow)//降雨结束后，流量小于等于基流时，计算结束
-                if (i > length)//降雨结束后,计算结束
+                //if (i > length && qs + qg + qi < baseFlow)//闄嶉洦缁撴潫鍚庯紝娴侀噺灏忎簬绛変簬鍩烘祦鏃讹紝璁＄畻缁撴潫
+                if (i > length)//闄嶉洦缁撴潫鍚?璁＄畻缁撴潫
                 {
                     b_flood = false;
                 }
                 i++;
             }
 
-            for (int j = 0; j < QG.size(); j++) // 河网总入流
+            for (int j = 0; j < QG.size(); j++) // 娌崇綉鎬诲叆娴?
             {
                 if (j == 0)
                 {
@@ -1712,14 +1073,14 @@ namespace bjd_model.CatchMent
         }
 
         /**
-         * 单元河网汇流——滞后演算法
+         * 鍗曞厓娌崇綉姹囨祦鈥斺€旀粸鍚庢紨绠楁硶
          * 
          * "param inflow
-         *            输入流量
+         *            杈撳叆娴侀噺
          * "param cs
-         *            河网蓄水消退系数
+         *            娌崇綉钃勬按娑堥€€绯绘暟
          * "param L
-         *            滞后时段
+         *            婊炲悗鏃舵
          * "return dq
          */
 
@@ -1757,22 +1118,5 @@ namespace bjd_model.CatchMent
 
 
 
-
-    class CommonFun
-    {
-        public static Date getDT(Date dt, int MM, int dd, int HH)
-        { //设置6月1号8时的时间
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(dt);
-            cal.set(Calendar.MONTH, MM);
-            cal.set(Calendar.DAY_OF_MONTH, dd);
-            cal.set(Calendar.HOUR_OF_DAY, HH);
-            cal.set(Calendar.MINUTE, 0);
-            cal.set(Calendar.SECOND, 0);
-            cal.set(Calendar.MILLISECOND, 0);
-            return cal.getTime();
-        }
-
-    }
 
 }

@@ -185,7 +185,14 @@
   <ItemGroup>
     <Compile Include="CatchMent\RFStationService.cs" />
     <Compile Include="CatchMent\RR11.cs" />
+    <Compile Include="CatchMent\RR11\RR11.Models.cs" />
+    <Compile Include="CatchMent\RR11\RR11.UpdateFile.cs" />
+    <Compile Include="CatchMent\RR11\RR11.CatchmentOperations.cs" />
+    <Compile Include="CatchMent\RR11\RR11.ParameterModify.cs" />
+    <Compile Include="CatchMent\RR11\RR11.Utilities.cs" />
     <Compile Include="CatchMent\Xaj_Model.cs" />
+    <Compile Include="CatchMent\Xaj_Model\Xaj_Model.Contracts.cs" />
+    <Compile Include="CatchMent\Xaj_Model\Xaj_Model.Utilities.cs" />
     <Compile Include="Common\ArcgisJson.cs" />
     <Compile Include="Common\DataBase.cs" />
     <Compile Include="Common\Dfs0.cs" />
