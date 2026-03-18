@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.toutiao.com)",
+      "Read(//c/Users/15257/AppData/Roaming/Code/User/**)"
+    ]
+  }
+}

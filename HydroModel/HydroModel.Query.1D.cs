@@ -110,6 +110,45 @@ namespace bjd_model
         }
 
         //获取河道出口的水位流量关系 -- 从断面文件中计算
+        public static List<double[]> Get_SectionDatas(string section_stcd, string reach_name, string chainage_str)
+        {
+            AtReach atreach;
+            if (chainage_str == "" || chainage_str == null)
+            {
+                atreach = Hd11.Read_Sectioninfo_FromSTCD(section_stcd);
+            }
+            else
+            {
+                double chainage = double.Parse(chainage_str);
+                atreach = AtReach.Get_Atreach(reach_name, chainage);
+            }
+
+            List<PointXZS> sectiondata = Xns11.Get_SectionData(atreach.reachname, atreach.chainage);
+            List<double[]> sectiondata1 = new List<double[]>();
+            for (int i = 0; i < sectiondata.Count; i++)
+            {
+                sectiondata1.Add(new double[] { sectiondata[i].X, sectiondata[i].Z });
+            }
+
+            return sectiondata1.OrderBy(arr => arr[0]).ToList();
+        }
+
+        public List<PointXY> Get_ReachSection_Locations(JArray section_infos)
+        {
+            List<PointXY> jwd_list = new List<PointXY>();
+            for (int i = 0; i < section_infos.Count; i++)
+            {
+                string reachname = section_infos[i][0].ToString();
+                double section_chainage = double.Parse(section_infos[i][1].ToString());
+
+                PointXY first_p = Mike11Pars.ReachList.Get_ReachPointxy(reachname, section_chainage);
+                PointXY first_jwd = PointXY.CoordTranfrom(first_p, 4547, 4326, 6);
+                jwd_list.Add(first_jwd);
+            }
+
+            return jwd_list;
+        }
+
         public Dictionary<double, double> Get_ReachOut_QH(string reachname)
         {
             string Xns11_sourcefilename = this.Modelfiles.Xns11_filename;
@@ -135,6 +174,18 @@ namespace bjd_model
         }
 
         //查询指定点的指定项结果数据
+        public static object Get_Point_Result(string plan_code, string now_timestr, PointXY p)
+        {
+            if (now_timestr == "")
+            {
+                Dictionary<DateTime, mike11_res> res_dic = HydroModel.Get_Mike11Point_AllRes(plan_code, p);
+                return Res11.Get_StrDic(res_dic);
+            }
+
+            DateTime now_time = SimulateTime.StrToTime(now_timestr);
+            return HydroModel.Get_Mike11Point_Res(plan_code, p, now_time);
+        }
+
         public Dictionary<DateTime, double> Get_Mike11Point_SingleRes(PointXY p, mike11_restype itemtype)
         {
             HydroModel hydromodel = this;
@@ -371,6 +422,99 @@ namespace bjd_model
         }
 
         //获取模型指定时刻的 mike11 GIS结果信息 -- 从数据库，用于前端获取
+        public static Dictionary<string, object> Get_Section_Discharges(string plan_code, Dictionary<string, AtReach1> atreachs)
+        {
+            Dictionary<string, object> discharge_res = new Dictionary<string, object>();
+            for (int i = 0; i < atreachs.Count; i++)
+            {
+                string mike21_pointsource_id = atreachs.ElementAt(i).Key;
+                string reach_name = atreachs.ElementAt(i).Value.reachname;
+                double chainage = atreachs.ElementAt(i).Value.chainage;
+
+                AtReach atreach = AtReach.Get_Atreach(reach_name, chainage);
+                Dictionary<string, Dictionary<DateTime, float>> res = HydroModel.Get_SectionRes(plan_code, atreach);
+                Dictionary<DateTime, float> section_discharge = res == null ? null : HydroModel.Get_SectionRes(plan_code, atreach)["discharge"];
+
+                if (section_discharge == null)
+                {
+                    Dictionary<DateTime, double> section_discharge1 = Res11.Load_SectionRes_FromResFile(plan_code, atreach)["discharge"];
+                    discharge_res.Add(mike21_pointsource_id, section_discharge1);
+                }
+                else
+                {
+                    discharge_res.Add(mike21_pointsource_id, section_discharge);
+                }
+            }
+
+            return discharge_res;
+        }
+
+        public Dictionary<string, Dictionary<DateTime, double>> Get_Catchment_Discharges(Dictionary<string, string> catchments)
+        {
+            Dictionary<string, Dictionary<DateTime, double>> discharge_res = new Dictionary<string, Dictionary<DateTime, double>>();
+            for (int i = 0; i < catchments.Count; i++)
+            {
+                string mike21_pointsource_id = catchments.ElementAt(i).Key;
+                string catchment_name = catchments.ElementAt(i).Value;
+
+                Dictionary<DateTime, double> catchment_q = Mike11Pars.BoundaryList.Get_TimeBnd_DataGC(catchment_name);
+                discharge_res.Add(mike21_pointsource_id, catchment_q);
+            }
+
+            return discharge_res;
+        }
+
+        public static List<Reach_Design_Flood> Get_Design_Flood(string business_code)
+        {
+            Dictionary<string, List<string>> business_instance = HydroModel.Get_BusinessModel_ModelInstance_Relation();
+            if (!business_instance.Keys.Contains(business_code)) return null;
+
+            List<string> instances = business_instance[business_code];
+            string model_instance = "";
+            for (int i = 0; i < instances.Count; i++)
+            {
+                if (instances[i].Contains("mike11"))
+                {
+                    model_instance = instances[i];
+                    break;
+                }
+            }
+
+            if (model_instance == "")
+            {
+                for (int i = 0; i < instances.Count; i++)
+                {
+                    if (instances[i].Contains("mike21"))
+                    {
+                        model_instance = instances[i];
+                        break;
+                    }
+                }
+            }
+
+            if (model_instance == "")
+            {
+                for (int i = 0; i < instances.Count; i++)
+                {
+                    if (instances[i].Contains("flood"))
+                    {
+                        model_instance = instances[i];
+                        break;
+                    }
+                }
+            }
+            if (model_instance == "") model_instance = Mysql_GlobalVar.now_instance;
+
+            List<Reach_Design_Flood> res = Reach_Design_Flood.Get_ReachFloodInfo_FromDB(model_instance);
+            List<Reach_Design_Flood> res1 = new List<Reach_Design_Flood>();
+            for (int i = 0; i < res.Count; i++)
+            {
+                if (res[i].design_floods != null) res1.Add(res[i]);
+            }
+
+            return res1;
+        }
+
         public static string Get_Mike11Gis_Result(string plan_code,string model_instance,Mike11FloodRes_GisType res_gistype, string time = "")
         {
             if(res_gistype == Mike11FloodRes_GisType.reach_centerline)

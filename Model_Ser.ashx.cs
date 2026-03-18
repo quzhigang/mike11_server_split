@@ -392,7 +392,6 @@ namespace bjd_model
                 return obj.ToString();
             }
 
-            //设置当前项目名(模型实例名)
             Mysql_GlobalVar.now_instance = model_instance;
 
             //更新水情和工情数据库
@@ -400,11 +399,7 @@ namespace bjd_model
             //HH_INFO.Update_GateStateTable();
 
             //新建模型(请求一次)
-            HydroModel model = HydroModel.Create_Model(fangan_name, start_timestr, end_timestr, fangan_desc, base_plan_code, plan_code, step_saveminutes);
-
-            //将集合序列化为json格式的字符串
-            double time_hours = model.ModelGlobalPars.Simulate_time.End.Subtract(model.ModelGlobalPars.Simulate_time.Begin).TotalHours;
-            int expect_seconds = (int)Item_Info.Get_ModelRun_ElispedTime(time_hours);
+            int expect_seconds = HydroModel.Create_Model_AndGetExpectSeconds(fangan_name, start_timestr, end_timestr, fangan_desc, base_plan_code, plan_code, step_saveminutes);
 
             //返回信息
             JObject obj1 = new JObject();
@@ -462,19 +457,10 @@ namespace bjd_model
                 return obj.ToString();
             }
 
-            //设置当前项目名(模型实例名)
             Mysql_GlobalVar.now_instance = model_instance;
 
             //删除模型
-            HydroModel.Delete(plan_code);
-
-            //通过服务调用删除NAM模型(有没有都可以删！)
-            string request_url = Mysql_GlobalVar.nam_serverurl;
-            request_url += "?request_type=del_model&request_pars=" + plan_code;
-            File_Common.Get_HttpReSponse(request_url);
-
-            //当删除方案为场次洪水推荐方案，如果场次洪水没有其他方案了，则删除场次洪水，否则更改推荐方案
-            Rain_Flood_Info.Del_RainFlood_Plan(plan_code);
+            HydroModel.Delete_ModelPlan(plan_code);
 
             //获取最新的模型集合
             string _data = Get_AllModels(model_instance);
@@ -565,8 +551,6 @@ namespace bjd_model
 
             //根据模型方案id获取已经集成的mike11模型实例名称(有文件夹)
             string model_instance = HydroModel.Get_Model_Instance(plan_code);
-
-            //设置当前项目名(模型实例名)
             Mysql_GlobalVar.now_instance = model_instance;
 
             //更新水情和工情数据库
@@ -574,27 +558,7 @@ namespace bjd_model
 
             //修改初始条件
             HydroModel hydromodel = HydroModel.Load(plan_code);
-            if(jar[1].ToString() == "monitor")
-            {
-                //采用监测水位
-                hydromodel.Update_InitialWaterlevel();
-
-                //更新基流
-                hydromodel.Update_Base_Discharge(); 
-            }
-            else
-            {
-                //人为指定
-                Dictionary<string, double> inital_level = JsonConvert.DeserializeObject<Dictionary<string, double>>(jar[1].ToString());
-                hydromodel.Update_InitialWaterlevel(inital_level);
-
-                //更新基流
-                hydromodel.Update_Base_Discharge(); 
-            }
-
-            //更新模型状态信息为待计算，重新保存模型
-            hydromodel.Model_state = Model_State.Ready_Calting;
-            hydromodel.Save();
+            hydromodel.Change_Reach_Initial(jar[1].ToString());
 
             //返回
             JObject obj = new JObject();
@@ -652,8 +616,6 @@ namespace bjd_model
 
             //根据模型方案id获取已经集成的mike11模型实例名称(有文件夹)
             string model_instance = HydroModel.Get_Model_Instance(plan_code);
-
-            //设置当前项目名(模型实例名)
             Mysql_GlobalVar.now_instance = model_instance;
 
             //修改边界条件
@@ -681,8 +643,6 @@ namespace bjd_model
 
             //根据模型方案id获取已经集成的mike11模型实例名称(有文件夹)
             string model_instance = HydroModel.Get_Model_Instance(plan_code);
-
-            //设置当前项目名(模型实例名)
             Mysql_GlobalVar.now_instance = model_instance;
 
             //修改调度方式
@@ -690,61 +650,15 @@ namespace bjd_model
 
             if (jar[1].ToString() == "monitor")  //全部采用闸站现状状态调度
             {
-                //更新工情数据库
-                Item_Info.Update_GateStateTable();
-
-                //根据数据库最新监测闸站调度，修改闸门调度(保存过模型，更新过模型状态)
-                hydromodel.Update_AllStr_DdInfo_FromGB();
+                hydromodel.Apply_GateDispatch_Monitor();
             }
             else if(jar[1].ToString() == "gaterule")  //全部采用规则调度
             {
-                hydromodel.Changeddgz_AllToGZDU();
-
-                //重新保存模型  --保存模型实体和调度信息，但未更新状态
-                hydromodel.Save();
-
-                //更新模型状态信息为待计算
-                hydromodel.Model_state = Model_State.Ready_Calting;
-                string[] model_info = Item_Info.Get_Model_Info(hydromodel, "", false);
-                HydroModel.Update_ModelStateInfo(hydromodel, model_info[4]);
-
-                //单独更新闸站状态信息
-                HydroModel.Update_Model_Ddinfo(hydromodel, model_info[6]);
+                hydromodel.Apply_GateDispatch_Rule();
             }
             else   //指令调度
             {
-                var dd_array = jar[1];
-                Dictionary<string, List<DdInfo>> dd_info = new Dictionary<string, List<DdInfo>>();
-                for (int i = 0; i < dd_array.Count(); i++)
-                {
-                    //每个建筑物(英文名)1个或多个调度指令，每个调度指令包括4个参数 时间、调度方式(中文)、开闸数、调度量，时间为""表示全过程保持
-                    string str_id = dd_array[i][0].ToString();
-                    List<DdInfo> str_dds = new List<DdInfo>();
-                    Struct_BasePars str_pars = Item_Info.Get_StrBaseInfo(str_id);
-
-                    for (int j = 1; j < dd_array[i].Count(); j++)
-                    {
-                        string dd_type =  dd_array[i][j][1].ToString();
-                        int open_n = int.Parse(dd_array[i][j][2].ToString());
-                        double open_h = double.Parse(dd_array[i][j][3].ToString());
-
-                        if (dd_type == "全开")
-                        {
-                            open_n = str_pars.gate_n; open_h = str_pars.gate_h;
-                        }
-                        else if(dd_type == "全关" || dd_type == "规则")
-                        {
-                            open_n = 0; open_h = 0;
-                        }
-                        DdInfo str_ddinfo = new DdInfo(dd_array[i][j][0].ToString(), dd_type, open_n, open_h);
-
-                        str_dds.Add(str_ddinfo);
-                    }
-                    dd_info.Add(str_id, str_dds);
-                }
-
-                //根据参数修改闸门调度(保存过模型，更新过模型状态)
-                hydromodel.Update_AllStr_DdInfo(dd_info);
+                hydromodel.Apply_GateDispatch_Command(jar[1] as JArray);
             }
 
             //返回该模型最新的调度信息，必须返回json格式的字符串，否则前端回调函数将不执行
@@ -763,8 +677,6 @@ namespace bjd_model
 
             //根据模型方案id获取已经集成的mike21模型实例名称(有文件夹)
             string model_instance = HydroModel.Get_Model_Instance(plan_code);
-
-            //设置当前项目名(模型实例名)
             Mysql_GlobalVar.now_instance = model_instance;
 
             //加载模型
@@ -774,17 +686,7 @@ namespace bjd_model
             Reach_Break_BaseInfo break_baseinfo = JsonConvert.DeserializeObject<Reach_Break_BaseInfo>(jar[1].ToString());
 
             //根据参数修改溃口设置(先删除已有溃口，再增加)
-            hydromodel.Add_Fhkstr(ref break_baseinfo);
-
-            //更新模型参数数据库中的溃口设置信息
-            Reach_Break_BaseInfo.Update_Reach_BreakInfo(plan_code, model_instance, break_baseinfo);
-
-            //更新初始视角
-            HydroModel.Update_ModelPlan_InitialView(hydromodel, break_baseinfo);
-
-            //更新模型状态信息为待计算，重新保存模型
-            hydromodel.Model_state = Model_State.Ready_Calting;
-            hydromodel.Save();
+            hydromodel.Change_ReachBreak(plan_code, model_instance, break_baseinfo);
 
             //返回
             JObject obj = new JObject();
@@ -828,17 +730,7 @@ namespace bjd_model
             HydroModel model = HydroModel.Load(plan_code);
 
             JArray jar1 = JArray.Parse(jar[1].ToString());
-            List<PointXY> jwd_list = new List<PointXY>();
-            for (int i = 0; i < jar1.Count; i++)
-            {
-                string reachname = jar1[i][0].ToString();
-                double section_chainage = double.Parse(jar1[i][1].ToString());
-
-                //获取该河道断面位置
-                PointXY first_p = model.Mike11Pars.ReachList.Get_ReachPointxy(reachname, section_chainage);
-                PointXY first_jwd = PointXY.CoordTranfrom(first_p, 4547, 4326, 6);
-                jwd_list.Add(first_jwd);
-            }
+            List<PointXY> jwd_list = model.Get_ReachSection_Locations(jar1);
 
             return File_Common.Serializer_Obj(jwd_list);
         }
@@ -855,8 +747,6 @@ namespace bjd_model
 
             //根据模型方案id获取已经集成的mike11模型实例名称(有文件夹)
             string model_instance = HydroModel.Get_Model_Instance(plan_code);
-
-            //设置当前项目名(模型实例名)
             Mysql_GlobalVar.now_instance = model_instance;
 
             //更新数据库调度目标设置信息
@@ -968,38 +858,19 @@ namespace bjd_model
             List<string> fault_gates = JsonConvert.DeserializeObject<List<string>>(jar1[2].ToString());
             List<string> gate_h = JsonConvert.DeserializeObject<List<string>>(jar1[3].ToString());
             List<double> gate_h_list = new List<double>();
-            int open_n = 0;double sum_h = 0;
             for (int i = 0; i < gate_h.Count; i++)
             {
-                double gateh = double.Parse(gate_h[i]);
-                gate_h_list.Add(gateh);
-                if (gateh != 0) open_n++;
-                sum_h += gateh;
+                gate_h_list.Add(double.Parse(gate_h[i]));
             }
-            double ava_h = sum_h / open_n;
 
             //根据模型方案id获取已经集成的mike11模型实例名称(有文件夹)
             string model_instance = HydroModel.Get_Model_Instance(plan_code);
-
-            //设置当前项目名(模型实例名)
             Mysql_GlobalVar.now_instance = model_instance;
 
             //修改调度方式
             HydroModel hydromodel = HydroModel.Load(plan_code);
 
-            //先设置调度方式为当前监测
-            Item_Info.Update_GateStateTable();
-            Item_Info.Update_AllStr_DdInfo_FromGB(ref hydromodel);
-
-            //单独更改该闸门调度
-            Dictionary<string, List<DdInfo>> dd_info = new Dictionary<string, List<DdInfo>>();
-            DdInfo str_ddinfo = new DdInfo("", "半开", open_n, ava_h);
-            List<DdInfo> str_dds = new List<DdInfo>() { str_ddinfo };
-            dd_info.Add(str_name, str_dds);
-            hydromodel.Update_AllStr_DdInfo(dd_info);
-
-            //更新故障闸门设置信息
-            FaultGate_BaseInfo.Update_FaultGate_SetInfo(plan_code,str_name,fault_type,fault_gates,gate_h_list);
+            hydromodel.Set_Fault_Gate(plan_code, str_name, fault_type, fault_gates, gate_h_list);
 
             //返回该模型最新的调度信息，必须返回json格式的字符串，否则前端回调函数将不执行
             JObject obj = new JObject();
@@ -1021,10 +892,9 @@ namespace bjd_model
                 return obj1.ToString();
             }
 
-            //设置当前项目名(模型实例名)
             Mysql_GlobalVar.now_instance = model_instance;
 
-            string res = FaultGate_BaseInfo.Get_FaultGate_SetInfo(plan_code, model_instance);
+            string res = HydroModel.Get_Fault_Gate(plan_code, model_instance);
             return res;
         }
 
@@ -1086,8 +956,6 @@ namespace bjd_model
 
             //根据模型方案id获取已经集成的mike11模型实例名称(有文件夹)
             string model_instance = HydroModel.Get_Model_Instance(plan_code);
-
-            //设置当前项目名(模型实例名)
             Mysql_GlobalVar.now_instance = model_instance;
 
             //获取结果
@@ -1341,17 +1209,7 @@ namespace bjd_model
             Mysql_GlobalVar.now_instance = model_instance;
 
             PointXY p = PointXY.Get_Pointxy(double.Parse(jd), double.Parse(wd));
-            object obj;
-            if (now_timestr == "")
-            {
-                Dictionary<DateTime, mike11_res> res_dic = HydroModel.Get_Mike11Point_AllRes(plan_code, p);
-                obj = Res11.Get_StrDic(res_dic);
-            }
-            else
-            {
-                DateTime now_time = SimulateTime.StrToTime(now_timestr);
-                obj = HydroModel.Get_Mike11Point_Res(plan_code, p, now_time);
-            }
+            object obj = HydroModel.Get_Point_Result(plan_code, now_timestr, p);
 
             //将集合序列化为json格式的字符串
             string _data = File_Common.Serializer_Obj(obj);
@@ -1510,38 +1368,11 @@ namespace bjd_model
 
             //根据模型方案id获取已经集成的mike11模型实例名称(有文件夹)
             string model_instance = HydroModel.Get_Model_Instance(plan_code);
-
-            //设置当前项目名(模型实例名)
             Mysql_GlobalVar.now_instance = model_instance;
             Dictionary<string, AtReach1> atreachs = JsonConvert.DeserializeObject<Dictionary<string, AtReach1>>(jar[1].ToString());
             if (atreachs == null) return "";
 
-            //逐个断面遍历
-            Dictionary<string, object> discharge_res = new Dictionary<string, object>();
-            for (int i = 0; i < atreachs.Count; i++)
-            {
-                string mike21_pointsource_id = atreachs.ElementAt(i).Key;
-                string reach_name = atreachs.ElementAt(i).Value.reachname;
-                double chainage = atreachs.ElementAt(i).Value.chainage;
-
-                //获取结果
-                AtReach atreach = AtReach.Get_Atreach(reach_name, chainage);
-
-                //先从数据库直接获取结果
-                Dictionary<string, Dictionary<DateTime, float>> res = HydroModel.Get_SectionRes(plan_code, atreach);
-                Dictionary<DateTime, float> section_discharge = res == null?null: HydroModel.Get_SectionRes(plan_code, atreach)["discharge"];
-
-                //如果是空，则直接读取模型结果文件
-                if (section_discharge == null)
-                {
-                    Dictionary<DateTime, double> section_discharge1 = Res11.Load_SectionRes_FromResFile(plan_code, atreach)["discharge"];
-                    discharge_res.Add(mike21_pointsource_id, section_discharge1);
-                }
-                else
-                {
-                    discharge_res.Add(mike21_pointsource_id, section_discharge);
-                }
-            }
+            Dictionary<string, object> discharge_res = HydroModel.Get_Section_Discharges(plan_code, atreachs);
 
             string _data = File_Common.Serializer_Obj(discharge_res);
 
@@ -1557,25 +1388,13 @@ namespace bjd_model
 
             //根据模型方案id获取已经集成的mike11模型实例名称(有文件夹)
             string model_instance = HydroModel.Get_Model_Instance(plan_code);
-
-            //设置当前项目名(模型实例名)
             Mysql_GlobalVar.now_instance = model_instance;
             Dictionary<string, string> catchments = JsonConvert.DeserializeObject<Dictionary<string, string>>(jar[1].ToString());
             if (catchments == null) return "";
 
             //加载模型
             HydroModel hydromodel = HydroModel.Load(plan_code);
-
-            //逐个子流域遍历
-            Dictionary<string, Dictionary<DateTime, double>> discharge_res = new Dictionary<string, Dictionary<DateTime, double>>();
-            for (int i = 0; i < catchments.Count; i++)
-            {
-                string mike21_pointsource_id = catchments.ElementAt(i).Key;
-                string catchment_name = catchments.ElementAt(i).Value;   //对应的是边界条件ID
-
-                Dictionary<DateTime, double> catchment_q = hydromodel.Mike11Pars.BoundaryList.Get_TimeBnd_DataGC(catchment_name);
-                discharge_res.Add(mike21_pointsource_id, catchment_q);
-            }
+            Dictionary<string, Dictionary<DateTime, double>> discharge_res = hydromodel.Get_Catchment_Discharges(catchments);
 
             string _data = File_Common.Serializer_Obj(discharge_res);
 
@@ -1610,30 +1429,7 @@ namespace bjd_model
             if (jar[0].ToString() == "" ) return null;
             Mysql_GlobalVar.now_instance = "wg_mike11";
 
-            AtReach atreach;
-            if (jar[1].ToString() == "" || jar[1].ToString() == null) 
-            {
-                //通过特征断面ID从数据库来获取位置
-                string section_stcd = jar[0].ToString();
-                atreach = Hd11.Read_Sectioninfo_FromSTCD(section_stcd);
-            }
-            else
-            {
-                string reach_name = jar[0].ToString();
-                double chainage = double.Parse(jar[1].ToString());
-                atreach = AtReach.Get_Atreach(reach_name, chainage);
-            }
-
-            //断面如果不在断面上，则获取最近的断面
-            List<PointXZS> sectiondata = Xns11.Get_SectionData(atreach.reachname, atreach.chainage);
-            List<double[]> sectiondata1 = new List<double[]>();
-            for (int i = 0; i < sectiondata.Count; i++)
-            {
-                sectiondata1.Add(new double[] { sectiondata[i].X, sectiondata[i].Z});
-            }
-
-            //断面数据排序
-            List<double[]> sectiondata2 = sectiondata1.OrderBy(arr => arr[0]).ToList();
+            List<double[]> sectiondata2 = HydroModel.Get_SectionDatas(jar[0].ToString(), jar[0].ToString(), jar[1].ToString());
 
             //将集合序列化为json格式的字符串
             string _data = File_Common.Serializer_Obj(sectiondata2);
@@ -1790,56 +1586,9 @@ namespace bjd_model
         //获取河道水库设计洪水信息 
         public string Get_Design_Flood(string business_code)
         {
-            //获取该业务模型包含的一维模型实例
-            Dictionary<string, List<string>> business_instance = HydroModel.Get_BusinessModel_ModelInstance_Relation();
-            if (!business_instance.Keys.Contains(business_code)) return null;
-            List<string> instances = business_instance[business_code];
-            string model_instance = "";
-            for (int i = 0; i < instances.Count; i++)
-            {
-                if (instances[i].Contains("mike11"))
-                {
-                    model_instance = instances[i];
-                    break;
-                }
-            }
-
-            if(model_instance == "")
-            {
-                for (int i = 0; i < instances.Count; i++)
-                {
-                    if (instances[i].Contains("mike21"))
-                    {
-                        model_instance = instances[i];
-                        break;
-                    }
-                }
-            }
-
-            if (model_instance == "")
-            {
-                for (int i = 0; i < instances.Count; i++)
-                {
-                    if (instances[i].Contains("flood"))
-                    {
-                        model_instance = instances[i];
-                        break;
-                    }
-                }
-            }
-            if (model_instance == "") model_instance = Mysql_GlobalVar.now_instance;
-
-            //数据库查询设计洪水
-            List<Reach_Design_Flood> res = Reach_Design_Flood.Get_ReachFloodInfo_FromDB(model_instance);
-
-            //刷掉没有设计洪水的
-            List<Reach_Design_Flood> res1 = new List<Reach_Design_Flood>();
-            for (int i = 0; i < res.Count; i++)
-            {
-                if (res[i].design_floods != null) res1.Add(res[i]);
-            }
-
-            return File_Common.Serializer_Obj(res1);
+            List<Reach_Design_Flood> res = HydroModel.Get_Design_Flood(business_code);
+            if (res == null) return null;
+            return File_Common.Serializer_Obj(res);
         }
 
         //获取流域 预警信息
@@ -1895,9 +1644,7 @@ namespace bjd_model
         {
             if (plan_code == "" || plan_code == null)
             {
-                JObject obj = new JObject();
-                obj.Add("success", true);
-                return obj.ToString();
+                return Get_SuccessObj();
             }
 
             //设置当前项目名(模型实例名)

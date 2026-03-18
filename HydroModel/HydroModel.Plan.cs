@@ -95,6 +95,14 @@ namespace bjd_model
             return Create_NewModel(fangan_name, start_timestr, end_timestr, model_desc, base_plan_code,plan_code, step_saveminutes);
         }
 
+        public static int Create_Model_AndGetExpectSeconds(string fangan_name, string start_timestr, string end_timestr,
+                               string model_desc, string base_plan_code, string plan_code, int step_saveminutes)
+        {
+            HydroModel model = Create_Model(fangan_name, start_timestr, end_timestr, model_desc, base_plan_code, plan_code, step_saveminutes);
+            double time_hours = model.ModelGlobalPars.Simulate_time.End.Subtract(model.ModelGlobalPars.Simulate_time.Begin).TotalHours;
+            return (int)Item_Info.Get_ModelRun_ElispedTime(time_hours);
+        }
+
         //在模型实体数据库里 修改模型方案名称和描述和保存时间步长
         public static void Change_ModelBaseinfo(string plan_code, string fangan_name, string model_desc, int step_save_minutes = -1)
         {
@@ -338,6 +346,17 @@ namespace bjd_model
             Delete_Model_Res11(plan_code);
             Delete_Model_GisLineRes11(plan_code);
             Delete_Model_GisPolygonRes11(plan_code);
+        }
+
+        public static void Delete_ModelPlan(string plan_code)
+        {
+            Delete(plan_code);
+
+            string request_url = Mysql_GlobalVar.nam_serverurl;
+            request_url += "?request_type=del_model&request_pars=" + plan_code;
+            File_Common.Get_HttpReSponse(request_url);
+
+            Rain_Flood_Info.Del_RainFlood_Plan(plan_code);
         }
 
         //传递模型 -- 各用户之间传递模型（数据库里用户的模型增加）

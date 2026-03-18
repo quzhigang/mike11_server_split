@@ -261,7 +261,7 @@ namespace bjd_model
         #endregion
 
 
-        #region 模型全局参数操作 -- 修改模拟时间、步长、一维保存步数
+        #region 模型全局参数操作 -- 开始模拟、修改模拟时间、步长、一维保存步数
         //开始模拟(正式) -- 静态方法，返回模拟所需要的大概时间
         public static double Run(string plan_code,bool is_quick = false)
         {
@@ -614,6 +614,7 @@ namespace bjd_model
             List<string> instance_list = Get_Model_Instance_list(this.Modelname);
             if (instance_list.Any(s => s.Contains("mike21"))) Request_Mike21_Server(this, instance_list, model_instance, business_code);
         }
+        #endregion 
     }
 }
 

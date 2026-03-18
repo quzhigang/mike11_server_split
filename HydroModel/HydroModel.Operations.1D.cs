@@ -353,6 +353,64 @@ namespace bjd_model
         }
 
         //重新与给定的需要修改的闸门调度信息匹配
+        public void Apply_GateDispatch_Monitor()
+        {
+            Item_Info.Update_GateStateTable();
+            Update_AllStr_DdInfo_FromGB();
+        }
+
+        public void Apply_GateDispatch_Rule()
+        {
+            Changeddgz_AllToGZDU();
+            Save();
+
+            Model_state = Model_State.Ready_Calting;
+            string[] model_info = Item_Info.Get_Model_Info(this, "", false);
+            Update_ModelStateInfo(this, model_info[4]);
+            Update_Model_Ddinfo(this, model_info[6]);
+        }
+
+        public void Apply_GateDispatch_Command(JArray dd_array)
+        {
+            Dictionary<string, List<DdInfo>> dd_info = Build_GateDispatch_DdInfo(dd_array);
+            Update_AllStr_DdInfo(dd_info);
+        }
+
+        private static Dictionary<string, List<DdInfo>> Build_GateDispatch_DdInfo(JArray dd_array)
+        {
+            Dictionary<string, List<DdInfo>> dd_info = new Dictionary<string, List<DdInfo>>();
+            for (int i = 0; i < dd_array.Count(); i++)
+            {
+                string str_id = dd_array[i][0].ToString();
+                List<DdInfo> str_dds = new List<DdInfo>();
+                Struct_BasePars str_pars = Item_Info.Get_StrBaseInfo(str_id);
+
+                for (int j = 1; j < dd_array[i].Count(); j++)
+                {
+                    string dd_type = dd_array[i][j][1].ToString();
+                    int open_n = int.Parse(dd_array[i][j][2].ToString());
+                    double open_h = double.Parse(dd_array[i][j][3].ToString());
+
+                    if (dd_type == "全开")
+                    {
+                        open_n = str_pars.gate_n;
+                        open_h = str_pars.gate_h;
+                    }
+                    else if (dd_type == "全关" || dd_type == "规则")
+                    {
+                        open_n = 0;
+                        open_h = 0;
+                    }
+                    DdInfo str_ddinfo = new DdInfo(dd_array[i][j][0].ToString(), dd_type, open_n, open_h);
+
+                    str_dds.Add(str_ddinfo);
+                }
+                dd_info.Add(str_id, str_dds);
+            }
+
+            return dd_info;
+        }
+
         public static void Match_Gatedd_Infos(ref string[] model_info, Dictionary<string, List<DdInfo>> new_ddinfos)
         {
             string gate_ddinfo = model_info[6];
@@ -711,6 +769,63 @@ namespace bjd_model
         }
 
         //修改某位置的初始水位值
+        public void Change_Reach_Initial(string initial_type_or_level)
+        {
+            if (initial_type_or_level == "monitor")
+            {
+                Update_InitialWaterlevel();
+                Update_Base_Discharge();
+            }
+            else
+            {
+                Dictionary<string, double> inital_level = JsonConvert.DeserializeObject<Dictionary<string, double>>(initial_type_or_level);
+                Update_InitialWaterlevel(inital_level);
+                Update_Base_Discharge();
+            }
+
+            Model_state = Model_State.Ready_Calting;
+            Save();
+        }
+
+        public void Change_ReachBreak(string plan_code, string model_instance, Reach_Break_BaseInfo break_baseinfo)
+        {
+            Add_Fhkstr(ref break_baseinfo);
+            Reach_Break_BaseInfo.Update_Reach_BreakInfo(plan_code, model_instance, break_baseinfo);
+            HydroModel.Update_ModelPlan_InitialView(this, break_baseinfo);
+
+            Model_state = Model_State.Ready_Calting;
+            Save();
+        }
+
+        public void Set_Fault_Gate(string plan_code, string str_name, string fault_type, List<string> fault_gates, List<double> gate_h_list)
+        {
+            int open_n = 0;
+            double sum_h = 0;
+            for (int i = 0; i < gate_h_list.Count; i++)
+            {
+                if (gate_h_list[i] != 0) open_n++;
+                sum_h += gate_h_list[i];
+            }
+            double ava_h = sum_h / open_n;
+
+            Item_Info.Update_GateStateTable();
+            HydroModel hydromodel = this;
+            Item_Info.Update_AllStr_DdInfo_FromGB(ref hydromodel);
+
+            Dictionary<string, List<DdInfo>> dd_info = new Dictionary<string, List<DdInfo>>();
+            DdInfo str_ddinfo = new DdInfo("", "半开", open_n, ava_h);
+            List<DdInfo> str_dds = new List<DdInfo>() { str_ddinfo };
+            dd_info.Add(str_name, str_dds);
+            Update_AllStr_DdInfo(dd_info);
+
+            FaultGate_BaseInfo.Update_FaultGate_SetInfo(plan_code, str_name, fault_type, fault_gates, gate_h_list);
+        }
+
+        public static string Get_Fault_Gate(string plan_code, string model_instance)
+        {
+            return FaultGate_BaseInfo.Get_FaultGate_SetInfo(plan_code, model_instance);
+        }
+
         public void Modify_ReachSection_InitialWaterLevel(AtReach atreach, double initialWaterLevel)
         {
             HydroModel hydromodel = this;

@@ -221,6 +221,28 @@ namespace bjd_model.Mike11
             return main_reachinfodic;
         }
 
+        //根据模型方案id和业务模型类型获取需要统计流量的特征断面(用于分洪、溃堤、闸站故障流量统计)
+        public static AtReach Get_ReachSection_From_PlanCode(string plan_code)
+        {
+            string business_code = HydroModel.Get_BusinessCode_FromDB(plan_code);
+            string model_instance = HydroModel.Get_Model_Instance(plan_code);
+            if (model_instance == "") return AtReach.Get_Atreach("", 0);
+
+            Dictionary<string, AtReach> business_section = new Dictionary<string, AtReach>();
+            business_section.Add("embank_break_gq", AtReach.Get_Atreach("SS_BRANCH_GQ_KD_GZDU", 50));
+            business_section.Add("embank_break_wh", AtReach.Get_Atreach("SS_BRANCH_WH_KD_GZDU", 50));
+
+            business_section.Add("gate_fault_hhz", AtReach.Get_Atreach("WH", 484));
+            business_section.Add("gate_fault_xhk", AtReach.Get_Atreach("QHNZ", 294));
+            business_section.Add("gate_fault_dlz", AtReach.Get_Atreach("GQ", 56272));
+            business_section.Add("gate_fault_hzz", AtReach.Get_Atreach("GQ", 80857));
+            business_section.Add("gate_fault_ytz", AtReach.Get_Atreach("GQ", 93001));
+
+            return business_section.Keys.Contains(business_code)
+                ? business_section[business_code]
+                : AtReach.Get_Atreach("", 0);
+        }
+
         //获取各河道的建筑物桩号
         public static List<float> Get_ReachStrInfo(string reach_name)
         {
