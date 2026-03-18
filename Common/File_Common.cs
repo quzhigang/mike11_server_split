@@ -105,6 +105,45 @@ namespace bjd_model.Common
             return allfile_byte;
         }
 
+        //将时序二维结果写入文本(*****速度慢,慎用!!****)
+        public static void Writedic_intotxt(string outputfilename, Dictionary<DateTime, List<Valuexy>> inputdic)
+        {
+            try
+            {
+                int diccount = inputdic.Count;
+                int[] listcount = new int[diccount];
+                for (int i = 0; i < diccount; i++)
+                {
+                    listcount[i] = inputdic.ElementAt(i).Value.Count;
+                }
+
+                for (int i = 0; i < diccount; i++)
+                {
+                    List<Valuexy> reslist = inputdic.ElementAt(i).Value;
+                    File.AppendAllText(outputfilename, inputdic.ElementAt(i).Key.ToString("yyyy-MM-dd hh:mm:ss") + "\r\n");
+                    Valuexy[] resvalue = reslist.ToArray();
+                    for (int j = 0; j < listcount[i]; j++)
+                    {
+                        StringBuilder strbuilder = new StringBuilder();
+                        strbuilder.Append(resvalue[j].number);
+                        strbuilder.Append(" ");
+                        strbuilder.Append(Math.Round(resvalue[j].X, 3));
+                        strbuilder.Append(" ");
+                        strbuilder.Append(Math.Round(resvalue[j].Y, 3));
+                        strbuilder.Append(" ");
+                        strbuilder.Append(Math.Round(resvalue[j].Z, 2));
+                        strbuilder.Append(" ");
+                        strbuilder.Append(Math.Round(resvalue[j].value, 2));
+                        File.AppendAllText(outputfilename, strbuilder.ToString() + "\r\n");
+                    }
+                }
+            }
+            catch (Exception er)
+            {
+                Console.WriteLine(er.Message);
+            }
+        }
+
         //将模型字节数组转换成模型文件，如果有结果文件则会新建新的结果文件夹，并把结果文件也转换出来
         public static void Down_Files(Dictionary<string, byte[]> modelfile_byte, string dest_dir)
         {

@@ -196,6 +196,11 @@
     <Compile Include="Common\ArcgisJson.cs" />
     <Compile Include="Common\DataBase.cs" />
     <Compile Include="Common\Dfs0.cs" />
+    <Compile Include="Common\Dfs0\Dfs0.Create.cs" />
+    <Compile Include="Common\Dfs0\Dfs0.DictionaryUtilities.cs" />
+    <Compile Include="Common\Dfs0\Dfs0.EditAndTransform.cs" />
+    <Compile Include="Common\Dfs0\Dfs0.ForecastRainfall.cs" />
+    <Compile Include="Common\Dfs0\Dfs0.UpdateCreate.cs" />
     <Compile Include="Common\Excel_Util.cs" />
     <Compile Include="Common\File_Common.cs" />
     <Compile Include="Common\GeoJson.cs" />
@@ -223,6 +228,7 @@
     <Compile Include="Mike Flood\Couple.cs" />
     <Compile Include="Mike11\Ad11.cs" />
     <Compile Include="Mike11\Bnd11.cs" />
+    <Compile Include="Mike11\GeometryPointXYZ.cs" />
     <Compile Include="Mike11\Hd11.cs" />
     <Compile Include="Mike11\Nwk11.cs" />
     <Compile Include="Mike11\Nwk11\Nwk11.Catchment.cs" />
